@@ -49,7 +49,9 @@ create_train_test_sets.py:
     target_balance (float): Desired fraction of positives (e.g., 0.5 for 50% -> default: 0.5)
     balance_tolerance (float): Allowed deviation from the target balance (e.g., 0.05 for ±5% -> default: 0.05)
 
-If the requested configuration (i.e. sample size and balance) isn’t possible, the code will search downward to use the largest possible number of rows that satisfies the configuration. After splitting, it reports the percentage of positive and negative samples in both train and test sets (using p_label as the balance metric in all cases).
+If the requested configuration (i.e. sample size and balance) isn’t possible,
+the code will search downward to use the largest possible number of rows that satisfies the configuration. 
+After splitting, it reports the percentage of positive and negative samples in both train and test sets (p_label is used for phishing, mixed and any, g_label for machine).
 
 
 
