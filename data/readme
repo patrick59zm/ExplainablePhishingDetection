@@ -20,7 +20,7 @@ Origin  Dataset Name                        Type     Source
 5       ling.csv                           phis     https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108
 6       assassin.csv                       phis     https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108
 7       trec-05.csv                        phis     https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108
-8       trec-06.csv                        phis     (empty)
+8       trec-06.csv                        phis     https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108
 9       trec-07.csv                        phis     https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108
 10      spam.csv                           phis     https://www.kaggle.com/datasets/shantanudhakadd/email-spam-detection-dataset-classification
 11      combined_..._generated.csv         mixed    https://www.kaggle.com/datasets/francescogreco97/human-llm-generated-phishing-legitimate-emails
