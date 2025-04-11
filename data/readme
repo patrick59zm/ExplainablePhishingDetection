@@ -30,11 +30,8 @@ Origin  Dataset Name                        Type     Source
 
 
 
-create_train_test_sets.py
-(not a markdown file) so that you can run it directly or via the provided shell command (for example, using:
-    bash data/run_dataset_split.sh --output_name trial_one.
-
-This script creates custom train/test sets from a combined CSV. It supports the following arguments (see the README text for details):
+create_train_test_sets.py:
+    This script creates custom train/test sets from a combined CSV. It supports the following arguments (see the README text for details):
 
 •Required argument:
     output_name (str): Base name for the output files. Two files will be generated (train and test).
