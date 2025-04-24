@@ -1,83 +1,12 @@
 import pandas as pd
 from pathlib import Path
-from sklearn.model_selection import train_test_split
-#
-# def filter_and_split_dataset(
-#     output_name: str,
-#     num_rows: int = None,
-#     origins: list = None,   # consult read_me
-#     data_type: str = "any",  # phishing, machine, mixed, any
-#     test_size: float = 0.2,
-#     input_file: str = "preprocessed/all_datasets_combined.csv"
-# ):
-#     input_path = Path(input_file)
-#     train_dir = Path("train")
-#     test_dir = Path("test")
-#     train_dir.mkdir(parents=True, exist_ok=True)
-#     test_dir.mkdir(parents=True, exist_ok=True)
-#
-#     if not input_path.exists():
-#         alt_path = Path("data") / input_file
-#         if alt_path.exists():
-#             input_path = alt_path
-#         else:
-#             raise FileNotFoundError(f"❌ File not found: '{input_file}' or '{alt_path}'")
-#
-#     df = pd.read_csv(input_path)
-#
-#     # Filter by origin
-#     if origins is not None:
-#         df = df[df["origin"].isin(origins)]
-#
-#     # Filter by data type
-#     if data_type == "phishing":
-#         df = df[df["p_label"].notna()]
-#     elif data_type == "machine":
-#         df = df[df["g_label"].notna()]
-#     elif data_type == "mixed":
-#         df = df[df["p_label"].notna() & df["g_label"].notna()]
-#     # "any" → no filtering
-#
-#     # Cap number of rows
-#     if num_rows is not None:
-#         num_rows = min(num_rows, len(df))
-#         df = df.sample(n=num_rows, random_state=42)
-#
-#     # Split into train/test
-#     train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
-#
-#     # Build output file names
-#     train_output = Path("data") / "train" / f"train_{output_name}.csv"
-#     test_output = Path("data") / "test" / f"test_{output_name}.csv"
-#
-#
-#     # Save to CSV
-#     train_df.to_csv(train_output, index=False)
-#     test_df.to_csv(test_output, index=False)
-#
-#     print(f"✅ Train saved to: {train_output} ({len(train_df)} rows)")
-#     print(f"✅ Test saved to: {test_output} ({len(test_df)} rows)")
-#
-# # To use the following comment out the __main__
-# # Example usage:
-# # filter_and_split_dataset(
-# #     output_name="trial_one",
-# #     num_rows=5000,
-# #     origins=[0, 12, 13], #consult read_me
-# #     data_type="phishing",
-# #     test_size=0.3
-# # )
-import pandas as pd
-from pathlib import Path
 import math
 from sklearn.model_selection import train_test_split
-import argparse
-
-import pandas as pd
-from pathlib import Path
-import math
-from sklearn.model_selection import train_test_split
-
+import re
+import unicodedata
+from contractions import fix as expand_contractions
+from bs4 import BeautifulSoup
+import html
 
 def balance_sample(df, label, requested_num_rows, target_balance, balance_tolerance):
     """
@@ -153,6 +82,42 @@ def print_balance_info(df, data_type):
         print(f"G_label: {pos_rate:.1f}% positive | {neg_rate:.1f}% negative")
 
 
+def sterilize_phishing_text(s: str) -> str:
+    """
+    Full sterilization pipeline:
+      1. Unicode normalize & unescape HTML entities → ASCII
+      2. Lowercase
+      3. Expand contractions (“can’t” → “cannot”)
+      4. Replace URLs → URL, emails → EMAIL
+      5. Mask long digit runs (5 or more digits) → <NUM_LONG>, short runs (digits < 5) → <NUM>
+      6. Remove any remaining non-alphanumeric (keeps spaces)
+      7. Collapse whitespace
+    """
+    s = html.unescape(s)
+    s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode('ascii')
+    s = s.lower()
+    s = expand_contractions(s)
+    s = re.sub(r'https?://\S+|www\.\S+', 'URL', s)
+    s = re.sub(r'\S+@\S+', 'EMAIL', s)
+    s = re.sub(r'\d{5,}', '<NUM_LONG>', s)
+    s = re.sub(r'\b\d{1,4}\b', '<NUM>', s)
+    s = re.sub(r'[^a-z0-9 ]+', ' ', s)
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s
+
+def clean_for_bert(s: str) -> str:
+    """
+       Minimal cleaning for BERT:
+         1. Unicode normalize & unescape HTML entities → ASCII
+         2. Strip HTML tags (keep visible text)
+    """
+    # 1) Unicode normalize & unescape
+    s = html.unescape(s)
+    s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode('ascii')
+    # 2) Strip HTML
+    s = BeautifulSoup(s, "html.parser").get_text(separator=" ")
+    return s
+
 def filter_and_split_dataset(
         output_name: str,
         num_rows: int = None,
@@ -162,7 +127,7 @@ def filter_and_split_dataset(
         input_file: str = "preprocessed/all_datasets_combined.csv",
         target_balance: float = None,  # desired positive fraction (e.g., 0.5)
         balance_tolerance: float = None  # allowed deviation (e.g., 0.05 for ±5%)
-):
+     ):
     """
     This function filters the combined dataset and splits it into train/test sets.
 
@@ -237,6 +202,11 @@ def filter_and_split_dataset(
             num_rows = min(num_rows, len(df))
             df = df.sample(n=num_rows, random_state=42)
 
+
+
+    #clean the phishing text if wanted
+    df['sterilized_text'] = df['text'].astype(str).apply(sterilize_phishing_text)
+    df['cleaned_text'] = df['text'].astype(str).apply(clean_for_bert)
     # Split into train/test sets.
     train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
 
@@ -254,6 +224,8 @@ def filter_and_split_dataset(
     print_balance_info(train_df, data_type)
     print("Test set balance:")
     print_balance_info(test_df, data_type)
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Filter and split a dataset.")
