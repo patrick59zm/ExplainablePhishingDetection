@@ -16,6 +16,9 @@ This repository provides data and scripts for an explainable phishing detection 
 
 ## Data
 
+The raw data as well as the preprocessed data can be downloaded from the polybox under https://polybox.ethz.ch/index.php/s/oS8Ej54GpfpLsP6.
+Be aware that to generate good train and test sets, technically only `all_datasets_combined.csv` is needed.
+
 ### Raw Data (`data/raw`)
 
 Contains original downloaded datasets in their native formats (CSV files).
