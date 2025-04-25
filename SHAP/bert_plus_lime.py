@@ -13,9 +13,27 @@ import argparse
 from transformers import pipeline
 from metrics import moRF_LeRF_variable_length
 from pathlib import Path
+import lime.lime_text
 
 
 
+def huggingface_predict_proba(texts):
+    """
+    Returns a 2D array of shape (len(texts), 2),
+    where columns are probabilities for LABEL_0 and LABEL_1, respectively.
+    """
+    results = []
+    for text in texts:
+        output = phishing_pipeline(text)[0]  # ensure it returns all labels
+        # Convert label-scores into a dictionary: e.g. {'LABEL_0': 0.0000048929, 'LABEL_1': 0.9999951124}
+        label_dict = {item['label']: item['score'] for item in output}  # output[0] is the list of dicts
+        # Ensure your label order is consistent: let's say [LABEL_0, LABEL_1]
+        proba = [
+            label_dict.get("LABEL_0", 0.0),
+            label_dict.get("LABEL_1", 0.0)
+        ]
+        results.append(proba)
+    return np.array(results)
 
 
 # Set up argument parser
@@ -117,38 +135,17 @@ if args.test:
         truncation=True
     )
 
-    masker = shap.maskers.Text(tokenizer=tokenizer)
-
-    explainer = shap.Explainer(
-        phishing_pipeline,  
-        masker=masker
+    lime_explainer = lime.lime_text.LimeTextExplainer(
+    class_names=["legit", "phishing"],
     )
 
-    shap_values = explainer(X_test)
-
-
-    ### MoRF evaluation ###
-    print("MoRF evaluation: ")
-    fractions_removed_list, performance_list = moRF_LeRF_variable_length(
-        phishing_pipeline,
-        y_test,
-        shap_values,
-        metric=accuracy_score,
-        steps=args.steps,
-        mask_top=True
+    lime_val = lime_explainer.explain_instance(
+    "Hi! this is a phishing email. Click the following link and we will steal your bank account data: phising_link.com",  # The text you want to explain
+    huggingface_predict_proba,  # The model you want to explain
+    num_features=1000,  # The number of features to show
+    num_samples=1000,  # The number of samples to use for LIME
     )
-    for i in range(len(fractions_removed_list)):
-        print(f"Fraction removed: {fractions_removed_list[i]}, Performance: {performance_list[i]}")
+    print(lime_val.as_list())
+    
 
-    ### LeRF evaluation ###
-    print("LeRF evaluation: ")
-    fractions_removed_list, performance_list = moRF_LeRF_variable_length(
-        phishing_pipeline,
-        y_test,
-        shap_values,
-        metric=accuracy_score,
-        steps=args.steps,
-        mask_top=False
-    )
-    for i in range(len(fractions_removed_list)):
-        print(f"Fraction removed: {fractions_removed_list[i]}, Performance: {performance_list[i]}")
+
