@@ -7,6 +7,7 @@ import unicodedata
 from contractions import fix as expand_contractions
 from bs4 import BeautifulSoup
 import html
+import argparse
 
 def balance_sample(df, label, requested_num_rows, target_balance, balance_tolerance):
     """
