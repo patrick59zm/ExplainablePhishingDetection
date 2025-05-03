@@ -3,15 +3,12 @@ data/extracted
 data/extracted_combined
 data/train
 data/test
-
 models/bert_checkpoints
 pvenv
 results
 __pycache__
 .vscode
 .idea
-
-
 SHAP/checkpointspvenv/
 pvenv
 data/setup_api_key.sh
