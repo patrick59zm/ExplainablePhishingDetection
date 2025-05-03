@@ -4,8 +4,8 @@ from pathlib import Path
 
 def convert_phishing_dataset():
     # Input and output paths
-    input_path = Path("raw/Phishing_Email.csv")
-    output_path = Path("preprocessed/phishing_dataset.csv")
+    input_path = Path("data/raw/Phishing_Email.csv")
+    output_path = Path("data/extracted/phishing_dataset.csv")
 
     # Load raw data
     df = pd.read_csv(input_path)
@@ -21,18 +21,18 @@ def convert_phishing_dataset():
         "g_label": None,  # Unknown if generated
         "origin": 0  # Dataset origin ID
     })
-    print(processed_df.head())
+
     # Ensure output directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Save preprocessed file
+    # Save extracted file
     processed_df.to_csv(output_path, index=False)
-    print(f"✅ Saved preprocessed dataset to: {output_path.resolve()}")
+    print(f"Extracted {"Phishing_Email.csv"} → origin={0} → saved to {"phishing_dataset.csv"}")
 
 
 def convert_seven_phishing_datasets():
-    input_dir = Path("raw")
-    output_dir = Path("preprocessed")
+    input_dir = Path("data/raw")
+    output_dir = Path("data/extracted")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     selected_files = [
@@ -45,13 +45,11 @@ def convert_seven_phishing_datasets():
         "TREC-07.csv"
     ]
 
-    for origin_id, filename in enumerate(selected_files, start=3):
+    for origin_id, filename in enumerate(selected_files, start=1):
         file_path = input_dir / filename
         if not file_path.exists():
-            print(f"❌ File not found: {filename}")
+            print(f"File not found: {filename}")
             continue
-        if(filename == "Assassin.csv"):
-            print("check 1")
         try:
             df = pd.read_csv(
                 file_path,
@@ -63,11 +61,11 @@ def convert_seven_phishing_datasets():
             )
 
         except Exception as e:
-            print(f"❌ Failed to read {filename}: {e}")
+            print(f"Failed to read {filename}: {e}")
             continue
 
         if not {"body", "label"}.issubset(df.columns):
-            print(f"⚠️ Skipping {filename}: missing 'body' or 'label' columns")
+            print(f"Skipping {filename}: missing 'body' or 'label' columns")
             continue
 
         df = df[df["label"].astype(str).str.strip() != ""]
@@ -87,18 +85,15 @@ def convert_seven_phishing_datasets():
         output_name = file_path.stem.lower() + ".csv"
         df_clean.to_csv(output_dir / output_name, index=False)
 
-        # print(df_clean.head())
-        # print(df_clean.columns)
-        # print(f"✅ Processed {filename} → origin={origin_id} → saved to {output_name}")
+        print(f"Extracted {filename} → origin={origin_id} → saved to {output_name}")
 
 def convert_spam_dataset():
-    input_path = Path("raw/spam.csv")
-    output_path = Path("preprocessed/spam.csv")
-    origin_id = 10
+    input_path = Path("data/raw/spam.csv")
+    output_path = Path("data/extracted/spam.csv")
+    origin_id = 8
 
     # Load the file with proper column names
     df = pd.read_csv(input_path, encoding="ISO-8859-1")
-
 
     # Rename and clean
     df = df.rename(columns={"v1": "label", "v2": "body"})
@@ -118,15 +113,15 @@ def convert_spam_dataset():
         "origin": origin_id
     })
 
-    # Save to preprocessed folder
+    # Save to extracted folder
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df_final.to_csv(output_path, index=False)
 
-    print(f"✅ Processed spam.csv → {output_path.resolve()}")
+    print(f"Extracted {"spam.csv"} → origin={origin_id} → saved to {"spam.csv"}")
 
 def convert_phishing_legit_generated():
-    input_dir = Path("raw")
-    output_dir = Path("preprocessed")
+    input_dir = Path("data/raw")
+    output_dir = Path("data/extracted")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     files = [
@@ -136,14 +131,14 @@ def convert_phishing_legit_generated():
         ("legit_m.csv", 0, 1)
     ]
 
-    origin_id = 11
+    origin_id = 9
     combined_data = []
 
     for filename, p_label, g_label in files:
         file_path = input_dir / filename
 
         if not file_path.exists():
-            print(f"❌ File not found: {filename}")
+            print(f"File not found: {filename}")
             continue
 
         try:
@@ -152,7 +147,7 @@ def convert_phishing_legit_generated():
             df = pd.read_csv(file_path, encoding="ISO-8859-1", engine="python", on_bad_lines="skip")
 
         if "text" not in df.columns:
-            print(f"⚠️ Skipping {filename}: no 'text' column found")
+            print(f"Skipping {filename}: no 'text' column found")
             continue
 
         df = df[df["text"].notnull()]
@@ -166,23 +161,23 @@ def convert_phishing_legit_generated():
         })
 
         combined_data.append(df_clean)
-        print(f"✅ Processed {filename} ({len(df_clean)} entries)")
 
     if combined_data:
         merged_df = pd.concat(combined_data, ignore_index=True)
         output_path = output_dir / "combined_phishing_legit_generated.csv"
         merged_df.to_csv(output_path, index=False)
-        print(f"✅ Combined file saved to: {output_path.resolve()}")
+        print(f"Extracted {"phishing_*.csv"} → origin={origin_id} → saved to {"combined_phishing_legit_generated.csv"}")
+
     else:
-        print("⚠️ No data processed. Combined file not created.")
+        print("No data processed. Combined file not created.")
 
 
 def preprocess_autextification():
-    input_dir = Path("raw")
-    output_dir = Path("preprocessed")
+    input_dir = Path("data/raw")
+    output_dir = Path("data/extracted")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    origin_id = 12
+    origin_id = 10
 
     # Attribution with anonymized model labels A-F (these were misnamed as detection0)
     attribution_files = ["train_gen_detection0.tsv", "test_gen_detection0.tsv"]
@@ -211,7 +206,6 @@ def preprocess_autextification():
         })
 
         dfs.append(df_clean)
-        print(f"✅ Processed attribution file (was detection0): {fname} ({len(df_clean)} rows)")
 
     # Detection part (labels are 'human' or 'generated')
     for fname in detection_files:
@@ -232,24 +226,24 @@ def preprocess_autextification():
         })
 
         dfs.append(df_clean)
-        print(f"✅ Processed true detection file: {fname} ({len(df_clean)} rows)")
+        #print(f"Processed true detection file: {fname} ({len(df_clean)} rows)")
 
     # Combine and save
     if dfs:
         combined = pd.concat(dfs, ignore_index=True)
         output_path = output_dir / "autextification_en_combined.csv"
         combined.to_csv(output_path, index=False)
-        print(f"✅ Saved combined dataset to: {output_path.resolve()}")
+        print(f"Extracted {"train_gen_decetion*.csv"} → origin={origin_id} → saved to {"autextification_en_combined.csv"}")
     else:
-        print("⚠️ No data processed.")
+        print("No data processed.")
 
 
 def preprocess_ai_phishing_emails():
-    input_dir = Path("raw/AI_phishing_emails")
-    output_dir = Path("preprocessed")
+    input_dir = Path("data/raw/AI_phishing_emails")
+    output_dir = Path("data/extracted")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    origin_id = 13
+    origin_id = 11
     emails = []
 
     for file in sorted(input_dir.glob("email_*.txt")):
@@ -264,15 +258,15 @@ def preprocess_ai_phishing_emails():
                         "origin": origin_id
                     })
         except Exception as e:
-            print(f"❌ Error reading {file.name}: {e}")
+            print(f"Error reading {file.name}: {e}")
 
     if emails:
         df = pd.DataFrame(emails)
         output_path = output_dir / "ai_phishing_emails.csv"
         df.to_csv(output_path, index=False)
-        print(f"✅ Saved {len(df)} AI phishing emails to: {output_path.resolve()}")
+        print(f"Extracted {"email_*.txt"} → origin={origin_id} → saved to {"ai_phishing_emails.csv"}")
     else:
-        print("⚠️ No valid emails found.")
+        print("No valid emails found.")
 
 # Run it
 

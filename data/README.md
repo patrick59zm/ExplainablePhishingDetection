@@ -7,7 +7,7 @@ This repository provides data and scripts for an explainable phishing detection 
 .
 ├── data
 │   ├── raw
-│   ├── preprocessed
+│   ├── extracted
 │   ├── train
 │   └── test
 ├── create_train_test_sets.py
@@ -23,34 +23,34 @@ Be aware that to generate good train and test sets, technically only `all_datase
 
 Contains original downloaded datasets in their native formats (CSV files).
 
-### Preprocessed Data (`data/preprocessed`)
+### Extracted Data (`data/extracted`) and (`data/extracted_combined`)
 
-Contains the combined and labeled dataset `all_datasets_combined.csv` with these columns:
+`data/extracted` contains one csv per origin dataset and `data/extracted_combined` a single csv with all sets combined.
+The csv contain these columns:
 
 - `text`: Original email content (classification feature)
 - `p_label`: Phishing label (1 if phishing, 0 otherwise)
 - `g_label`: Generated label (1 if machine-generated, 0 otherwise)
 - `origin`: Origin dataset ID (see table below)
 
-| Origin | Dataset Name                     | Type   | Source                                                                                                                               |
-| ------ | -------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 0      | phishing_dataset.csv             | phish  | Kaggle: https://www.kaggle.com/datasets/subhajournal/phishingemails                                                                 |
-| 1      | jose private                     | phish  | Not used – unprocessable emails                                                                                                      |
-| 3      | ceas-08.csv                      | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
-| 4      | enron.csv                        | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
-| 5      | ling.csv                         | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
-| 6      | assassin.csv                     | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
-| 7      | trec-05.csv                      | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
-| 8      | trec-06.csv                      | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
-| 9      | trec-07.csv                      | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
-| 10     | spam.csv                         | phish  | Kaggle: https://www.kaggle.com/datasets/shantanudhakadd/email-spam-detection-dataset-classification                                 |
-| 11     | combined_*_generated.csv         | mixed  | Kaggle: https://www.kaggle.com/datasets/francescogreco97/human-llm-generated-phishing-legitimate-emails                             |
-| 12     | autextification_en_combined.csv  | gen    | Hugging Face: https://huggingface.co/datasets/symanto/autextification2023                                                              |
-| 13     | ai_phishing_emails.csv           | mixed  | KSU: https://people.cs.ksu.edu/~lshamir/data/ai_phishing/                                                                             |
+| Origin | Dataset Name                          | Type   | Source                                                                                                                               |
+| ------ | ------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 0      | phishing_dataset.csv                  | phish  | Kaggle: https://www.kaggle.com/datasets/subhajournal/phishingemails                                                                 |
+| 1      | assassin.csv                          | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
+| 2      | ceas-08.csv                           | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
+| 3      | enron.csv                             | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
+| 4      | ling.csv                              | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
+| 5      | trec-05.csv                           | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
+| 6      | trec-06.csv                           | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
+| 7      | trec-07.csv                           | phish  | Figshare: https://figshare.com/articles/dataset/Seven_Phishing_Email_Datasets/25432108                                               |
+| 8      | spam.csv                              | phish  | Kaggle: https://www.kaggle.com/datasets/shantanudhakadd/email-spam-detection-dataset-classification                                 |
+| 9      | combined_phishing_legit_generated.csv | mixed  | Kaggle: https://www.kaggle.com/datasets/francescogreco97/human-llm-generated-phishing-legitimate-emails                             |
+| 10     | autextification_en_combined.csv       | gen    | Hugging Face: https://huggingface.co/datasets/symanto/autextification2023                                                              |
+| 11     | ai_phishing_emails.csv                | mixed  | KSU: https://people.cs.ksu.edu/~lshamir/data/ai_phishing/                                                                             |
 
 ## Preprocessing and Dataset Splitting
 
-The script `create_train_test_sets.py` loads `data/preprocessed/all_datasets_combined.csv`, performs optional filtering, balancing, two parallel text cleaning pipelines, and splits into train/test sets.
+The script `create_train_test_sets.py` loads `data/extracted_combined/all_datasets_combined.csv`, performs optional filtering, balancing, two parallel text cleaning pipelines, and splits into train/test sets.
 
 ### Two text pipelines
 - **Sterilized text** (`sterilized_text` column): full cleaning for classical models:
@@ -96,13 +96,13 @@ python3 create_train_test_sets.py [OPTIONS]
 ### Example Usage
 
 ```bash
-python3 create_train_test_sets.py \
+python3 data/create_train_test_sets.py \
   --output_name phishing_trial_a \
   --num_rows 5000 \
   --origins 0 3 4 \
   --data_type phishing \
   --test_size 0.25 \
-  --input_file data/preprocessed/all_datasets_combined.csv \
+  --input_file data/extracted_combined/all_datasets_combined.csv \
   --target_balance 0.5 \
   --balance_tolerance 0.05
 ```

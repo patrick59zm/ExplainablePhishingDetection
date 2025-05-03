@@ -56,7 +56,7 @@ def train_logistic_regression_model(
     # 2. Feature Extraction
     # Vectorizer
     vectorizer = TfidfVectorizer(max_features=max_features, ngram_range=ngram_range)
-    X = vectorizer.fit_transform(df["Email Text"])  # Use the preprocessed column
+    X = vectorizer.fit_transform(df["Email Text"])  # Use the extracted column
     y = df["Email Type"]
 
     # 3. Data Splitting

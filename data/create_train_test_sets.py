@@ -125,7 +125,7 @@ def filter_and_split_dataset(
         origins: list = None,  # consult read_me for details
         data_type: str = "any",  # must be one of: "phishing", "machine", "mixed", "any"
         test_size: float = 0.2,
-        input_file: str = "preprocessed/all_datasets_combined.csv",
+        input_file: str = "data/extracted_combined/all_datasets_combined.csv",
         target_balance: float = None,  # desired positive fraction (e.g., 0.5)
         balance_tolerance: float = None  # allowed deviation (e.g., 0.05 for ±5%)
      ):
@@ -145,18 +145,7 @@ def filter_and_split_dataset(
     After splitting into train and test, the function prints the % of positive and negative samples.
     """
     input_path = Path(input_file)
-    train_dir = Path("train")
-    test_dir = Path("test")
-    train_dir.mkdir(parents=True, exist_ok=True)
-    test_dir.mkdir(parents=True, exist_ok=True)
-
-    if not input_path.exists():
-        alt_path = Path("data") / input_file
-        if alt_path.exists():
-            input_path = alt_path
-        else:
-            raise FileNotFoundError(f"❌ File not found: '{input_file}' or '{alt_path}'")
-
+    print(input_path)
     df = pd.read_csv(input_path)
 
     # Filter by origins if provided.
@@ -203,22 +192,33 @@ def filter_and_split_dataset(
             num_rows = min(num_rows, len(df))
             df = df.sample(n=num_rows, random_state=42)
 
+    #Disregard rows with emtpy Text
+    df = df.loc[lambda d: d["text"].notna() & d["text"].astype(str).str.strip().astype(bool)]
 
+    #Cast labels to bool
+    df['p_label'] = df['p_label'].apply(lambda v: None if pd.isna(v) else bool(v))
+    df['g_label'] = df['g_label'].apply(lambda v: None if pd.isna(v) else bool(v))
 
-    #clean the phishing text if wanted
+    #Create the cleaned text
     df['sterilized_text'] = df['text'].astype(str).apply(sterilize_phishing_text)
     df['cleaned_text'] = df['text'].astype(str).apply(clean_for_bert)
     # Split into train/test sets.
     train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
 
-    # Save to CSV.
+    # Define paths
     train_output = Path("data") / "train" / f"train_{output_name}.csv"
     test_output = Path("data") / "test" / f"test_{output_name}.csv"
+
+    #Create directories if not already existent
+    train_output.parent.mkdir(parents=True, exist_ok=True)
+    test_output.parent.mkdir(parents=True, exist_ok=True)
+
+    #Saved train and test set
     train_df.to_csv(train_output, index=False)
     test_df.to_csv(test_output, index=False)
 
-    print(f"✅ Train saved to: {train_output} ({len(train_df)} rows)")
-    print(f"✅ Test saved to: {test_output} ({len(test_df)} rows)")
+    print(f"Train saved to: {train_output} ({len(train_df)} rows)")
+    print(f"Test saved to: {test_output} ({len(test_df)} rows)")
 
     # Evaluate and print the balance in each set.
     print("Train set balance:")
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_type", type=str, default="any", choices=["phishing", "machine", "mixed", "any"],
                         help="Type of data to filter")
     parser.add_argument("--test_size", type=float, default=0.2, help="Fraction of data to use as test set")
-    parser.add_argument("--input_file", type=str, default="preprocessed/all_datasets_combined.csv",
+    parser.add_argument("--input_file", type=str, default="data/extracted_combined/all_datasets_combined.csv",
                         help="Input CSV file")
     parser.add_argument("--target_balance", type=float, default=0.5,
                         help="Desired fraction of positives (e.g., 0.5 for 50%)")

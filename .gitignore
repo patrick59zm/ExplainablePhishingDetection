@@ -1,4 +1,7 @@
-data/preprocessed
+data/raw
+data/extracted
+data/extracted_combined
 data/train
 data/test
-SHAP/checkpoints
+SHAP/checkpointspvenv/
+pvenv

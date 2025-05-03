@@ -50,7 +50,7 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
     # 2. Feature Extraction
     # Vectorizer
     vectorizer = TfidfVectorizer(max_features=max_features, ngram_range=(1, 2))
-    X = vectorizer.fit_transform(df["Email Text"])  # Use the preprocessed column
+    X = vectorizer.fit_transform(df["Email Text"])  # Use the extracted column
     y = df["Email Type"]
 
     #3. Split data
