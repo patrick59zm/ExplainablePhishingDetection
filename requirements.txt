@@ -10,3 +10,4 @@ shap
 lime
 matplotlib
 seaborn
+xgboost
