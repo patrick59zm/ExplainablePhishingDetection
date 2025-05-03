@@ -6,3 +6,7 @@ data/test
 models/bert_checkpoints
 pvenv
 results
+__pycache__
+.vscode
+.idea
+
