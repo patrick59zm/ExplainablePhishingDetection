@@ -145,7 +145,6 @@ def filter_and_split_dataset(
     After splitting into train and test, the function prints the % of positive and negative samples.
     """
     input_path = Path(input_file)
-    print(input_path)
     df = pd.read_csv(input_path)
 
     # Filter by origins if provided.
