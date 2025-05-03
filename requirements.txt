@@ -1,0 +1,12 @@
+numpy
+pandas
+datasets
+scikit-learn
+torch
+transformers
+contractions
+beautifulsoup4
+shap
+lime
+matplotlib
+seaborn
