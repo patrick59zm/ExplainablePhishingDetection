@@ -49,7 +49,7 @@ def split_response(response):
     try:
         p_label = int(m1.group(1))
     except Exception:
-        p_label = 3
+        p_label = None
     try:
         reasons = [r.strip() for r in m2.group(1).split(",")]
     except Exception:
