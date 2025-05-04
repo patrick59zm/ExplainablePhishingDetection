@@ -8,6 +8,13 @@ from contractions import fix as expand_contractions
 from bs4 import BeautifulSoup
 import html
 import argparse
+import random
+import numpy as np
+
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+
 
 def balance_sample(df, label, requested_num_rows, target_balance, balance_tolerance):
     """
@@ -237,10 +244,10 @@ if __name__ == "__main__":
     parser.add_argument("--test_size", type=float, default=0.2, help="Fraction of data to use as test set")
     parser.add_argument("--input_file", type=str, default="data/extracted_combined/all_datasets_combined.csv",
                         help="Input CSV file")
-    parser.add_argument("--target_balance", type=float, default=0.5,
-                        help="Desired fraction of positives (e.g., 0.5 for 50%)")
-    parser.add_argument("--balance_tolerance", type=float, default=0.05,
-                        help="Allowed deviation from target balance (e.g., 0.05)")
+    parser.add_argument("--target_balance", type=float, default=None,
+                        help = "Desired fraction of positives (e.g., 0.5 for 50%); omit to skip balancing")
+    parser.add_argument("--balance_tolerance", type=float, default=None,
+                help = "Allowed deviation from target balance (e.g., 0.05); omit to skip balancing")
 
     args = parser.parse_args()
 
