@@ -43,6 +43,8 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
     df_train.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
     df_test.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
 
+    df_train['Email Text'] = df_train['Email Text'].fillna('')
+    df_test['Email Text'] = df_test['Email Text'].fillna('')
 
     # Combine training and testing data for consistent preprocessing and vectorization
     df = pd.concat([df_train, df_test], ignore_index=True)
@@ -143,6 +145,8 @@ def retrain_xgboost_model(df: pd.DataFrame, vectorizer: TfidfVectorizer,
     """
     df = df[["p_label", "sterilized_text"]]
     df.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    df['Email Text'] = df['Email Text'].fillna('')
+
 
     X = df["Email Text"]  # Use the fitted vectorizer
     y = df["Email Type"]
@@ -173,8 +177,8 @@ def retrain_xgboost_model(df: pd.DataFrame, vectorizer: TfidfVectorizer,
 
 
 if __name__ == "__main__":
-    train_data_path = "../data/train/train_phishing_trial_a.csv"
-    test_data_path = "../data/test/test_phishing_trial_a.csv"
+    train_data_path = "../data/train/train_dataset.csv"
+    test_data_path = "../data/test/test_dataset.csv"
 
     # Train the model
     trained_model, fitted_vectorizer = train_xgboost_model(train_data_path, test_data_path)
