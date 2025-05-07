@@ -14,9 +14,9 @@ def sparse_to_dense_array(sparse_matrix):
 
 
 def train_xgboost_model(train_data_path: str, test_data_path: str,
-                       max_features: int = 20000,
-                       max_depth: int = 6, learning_rate: float = 0.1,
-                       n_estimators: int = 1300,
+                       max_features: int = 25000,
+                       max_depth: int = 7, learning_rate: float = 0.05,
+                       n_estimators: int = 1800,
                        plot_importance: bool = True,
                        frac: float = 1.00) -> tuple[XGBClassifier, TfidfVectorizer]:
     """
@@ -173,7 +173,7 @@ def retrain_xgboost_model(df: pd.DataFrame, vectorizer: TfidfVectorizer,
     pipeline_xgboost = Pipeline([
         ("tfidf", vectorizer),
         ('dense', dense_transformer),
-        ("logreg", model)
+        ("xgboost", model)
     ])
 
     pipeline_xgboost.fit(X, y)  # Train on the full dataset

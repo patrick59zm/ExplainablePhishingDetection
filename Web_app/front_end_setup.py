@@ -1,12 +1,17 @@
 import random
 import gradio as gr
 from get_llm_prediction import call_api_and_process_output
+from models.logreg_explainability import get_logreg_mail_specific_explanation
+
 
 def classify_and_explain_email(raw_email: str, model_name: str, explain_level: str):
     """Return a random verdict and confidence."""
     if model_name == "Zero-shot SOTA-LLM":
         p_label, confidence, reasons = call_api_and_process_output(raw_email)
         verdict = "Phishing" if p_label == 1 else "Safe"
+        explanation = ", ".join(reasons) if reasons else "No explanation"
+    elif model_name == "logreg":
+        verdict, confidence, reasons = get_logreg_mail_specific_explanation(raw_email)
         explanation = ", ".join(reasons) if reasons else "No explanation"
     else:
         verdict = random.choice(["safe", "phishing"])
@@ -60,7 +65,7 @@ with gr.Blocks(theme="default") as demo:
                 with gr.TabItem("Settings"):
                     model_selector = gr.Dropdown(
                         label="Choose Model",
-                        choices=["Zero-shot SOTA-LLM", "modelB", "modelC"],
+                        choices=["Zero-shot SOTA-LLM", "logreg", "modelC"],
                         value="Zero-shot SOTA-LLM"
                     )
                     explanation_radio = gr.Radio(

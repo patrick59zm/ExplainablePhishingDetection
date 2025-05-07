@@ -108,7 +108,7 @@ def get_logreg_general_explainability(pipeline, top_n=20):
         return None
 
 
-def get_logreg_mail_specific_explanation(email_text, pipeline, top_n_instance=15):
+def get_logreg_mail_specific_explanation(email_text, pipeline=joblib.load("logistic_regression_model_pipeline.joblib"), top_n_instance=15):
     """
     Provides an inherent explanation for a specific email by showing the
     coefficients of the features (words/n-grams) present in that email.
@@ -128,9 +128,9 @@ def get_logreg_mail_specific_explanation(email_text, pipeline, top_n_instance=15
         return None
     try:
         vectorizer = pipeline.named_steps['tfidf']
-        logreg_model = pipeline.named_steps['logreg']
+        xgboost_model = pipeline.named_steps['xgboost']
 
-        if not hasattr(logreg_model, 'coef_'):
+        if not hasattr(xgboost_model, 'coef_'):
             print("Error: The 'logreg' step in the pipeline does not have 'coef_'.")
             return None
         if not hasattr(vectorizer, 'get_feature_names_out'):
@@ -138,7 +138,7 @@ def get_logreg_mail_specific_explanation(email_text, pipeline, top_n_instance=15
             return None
 
         all_feature_names = vectorizer.get_feature_names_out()
-        all_coefficients = logreg_model.coef_[0]
+        all_coefficients = xgboost_model.coef_[0]
         feature_to_coeff_map = dict(zip(all_feature_names, all_coefficients))
 
         tfidf_vector = vectorizer.transform([email_text])

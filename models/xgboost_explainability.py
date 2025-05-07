@@ -4,21 +4,16 @@ import joblib
 import xgboost as xgb  # Required for loading pipeline with XGBoost model
 
 
-# --- Helper Function for FunctionTransformer (Pickle-Safe) ---
-# This function must be defined at the module level for joblib to load the pipeline
-# if the pipeline was saved with a FunctionTransformer using it.
 def sparse_to_dense_array(sparse_matrix):
     """Converts a sparse matrix to a dense numpy array."""
     if hasattr(sparse_matrix, "toarray"):
         return sparse_matrix.toarray()
-    return sparse_matrix  # If it's already dense
+    return sparse_matrix
 
 
-# --- Global Path (Adjust if your file is named or located differently) ---
 DEFAULT_XGBOOST_PIPELINE_PATH = "xgboost_model_pipeline.joblib"
 
 
-# --- 1. Load XGBoost Pipeline ---
 def load_xgboost_pipeline(pipeline_path=DEFAULT_XGBOOST_PIPELINE_PATH):
     """
     Loads the trained scikit-learn pipeline for XGBoost.
@@ -33,8 +28,6 @@ def load_xgboost_pipeline(pipeline_path=DEFAULT_XGBOOST_PIPELINE_PATH):
     try:
         loaded_pipeline = joblib.load(pipeline_path)
         print(f"XGBoost pipeline loaded from: {pipeline_path}")
-        # Verify expected steps (optional, but good for debugging)
-        # Based on your training code, the XGBoost model step is named 'logreg'
         expected_steps = ['tfidf', 'dense', 'logreg']
         if not all(step in loaded_pipeline.named_steps for step in expected_steps):
             print(f"Warning: Loaded pipeline does not seem to have all expected steps: {expected_steps}.")
@@ -50,7 +43,6 @@ def load_xgboost_pipeline(pipeline_path=DEFAULT_XGBOOST_PIPELINE_PATH):
         return None
 
 
-# --- 2. Get Prediction Probabilities ---
 def get_xgboost_prediction_probabilities(email_text, pipeline):
     """
     Gets the phishing and non-phishing probabilities for a given email text
@@ -69,11 +61,8 @@ def get_xgboost_prediction_probabilities(email_text, pipeline):
         print("Error: XGBoost pipeline not loaded.")
         return None
     try:
-        # The pipeline handles vectorization and transformation internally
-        # It expects a list of documents (even if it's just one)
         probabilities = pipeline.predict_proba([email_text])
 
-        # Assuming the pipeline's classes_ are [0, 1] where 0=safe, 1=phishing
         safe_prob = probabilities[0, 0]
         phishing_prob = probabilities[0, 1]
 
@@ -87,7 +76,6 @@ def get_xgboost_prediction_probabilities(email_text, pipeline):
         return None
 
 
-# --- 3. Get General Model Explainability (Global Feature Importances) ---
 def get_xgboost_general_explainability(pipeline, top_n=20, importance_type='gain'):
     """
     Provides global feature importances from the XGBoost model in the pipeline.
@@ -106,7 +94,6 @@ def get_xgboost_general_explainability(pipeline, top_n=20, importance_type='gain
         print("Error: XGBoost pipeline not loaded.")
         return None
     try:
-        # Based on your training code, the XGBoost model step is named 'logreg'
         xgb_model_step_name = 'logreg'
         if xgb_model_step_name not in pipeline.named_steps:
             # Fallback if the user named it differently, e.g. 'xgb_classifier'
