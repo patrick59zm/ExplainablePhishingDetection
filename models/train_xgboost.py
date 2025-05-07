@@ -3,8 +3,14 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import accuracy_score, classification_report
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer
 from xgboost import XGBClassifier
 from joblib import dump
+
+def sparse_to_dense_array(sparse_matrix):
+    """Converts a sparse matrix to a dense numpy array."""
+    return sparse_matrix.toarray()
 
 
 def train_xgboost_model(train_data_path: str, test_data_path: str,
@@ -31,11 +37,11 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
     df_train = pd.read_csv(train_data_path)
     df_test = pd.read_csv(test_data_path)
 
-    df_train = df_train[["p_label", "cleaned_text"]]
-    df_test = df_test[["p_label", "cleaned_text"]]
+    df_train = df_train[["p_label", "sterilized_text"]]
+    df_test = df_test[["p_label", "sterilized_text"]]
 
-    df_train.rename(columns={'p_label': 'Email Type', 'cleaned_text': 'Email Text'}, inplace=True)
-    df_test.rename(columns={'p_label': 'Email Type', 'cleaned_text': 'Email Text'}, inplace=True)
+    df_train.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    df_test.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
 
 
     # Combine training and testing data for consistent preprocessing and vectorization
@@ -50,7 +56,7 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
     # 2. Feature Extraction
     # Vectorizer
     vectorizer = TfidfVectorizer(max_features=max_features, ngram_range=(1, 2))
-    X = vectorizer.fit_transform(df["Email Text"])  # Use the extracted column
+    X = vectorizer.fit_transform(df["Email Text"])  # Use the preprocessed column
     y = df["Email Type"]
 
     #3. Split data
@@ -82,7 +88,7 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
     print(f"Model Accuracy: {accuracy_bigrams:.4f}")
     print(classification_report(y_test, y_pred_bigrams))
 
-    # 6. Feature Importance (Optional)
+    # 6. Feature Importance
     if plot_importance:
         # Extract feature importance as a dictionary
         importance_dict = model.get_booster().get_score(importance_type="gain")
@@ -92,7 +98,6 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
             list(importance_dict.items()), columns=["Feature", "Importance"]
         )
 
-        # Convert feature names from "f1234" format to actual words
         importance_df["Feature"] = importance_df["Feature"].apply(
             lambda x: int(x[1:])
         )  # Remove 'f' prefix and convert to int
@@ -108,7 +113,6 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
             lambda i: feature_names[i] if i < len(feature_names) else f"Unknown_{i}"
         )
 
-        # Plot manually
         plt.figure(figsize=(12, 6))
         plt.barh(importance_df["Feature"], importance_df["Importance"], color="royalblue")
         plt.xlabel("Gain")
@@ -123,7 +127,7 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
 
 def retrain_xgboost_model(df: pd.DataFrame, vectorizer: TfidfVectorizer,
                          max_depth: int = 6, learning_rate: float = 0.1,
-                         n_estimators: int = 800) -> xgb.XGBClassifier:
+                         n_estimators: int = 800) -> Pipeline:
     """
     Retrains an XGBoost model on the entire dataset.
 
@@ -137,16 +141,13 @@ def retrain_xgboost_model(df: pd.DataFrame, vectorizer: TfidfVectorizer,
     Returns:
         xgb.XGBClassifier: The retrained XGBoost model.
     """
+    df = df[["p_label", "sterilized_text"]]
+    df.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
 
-    df = df[["p_label", "cleaned_text"]]
-
-    df.rename(columns={'p_label': 'Email Type', 'cleaned_text': 'Email Text'}, inplace=True)
-
-    # Vectorize the entire dataset using the provided vectorizer
-    X = vectorizer.transform(df["Email Text"])  # Use the fitted vectorizer
+    X = df["Email Text"]  # Use the fitted vectorizer
     y = df["Email Type"]
 
-    X_dense = X.toarray()
+    # X_dense = X.toarray()
 
     # Model
     model = xgb.XGBClassifier(
@@ -158,9 +159,17 @@ def retrain_xgboost_model(df: pd.DataFrame, vectorizer: TfidfVectorizer,
         n_estimators=n_estimators,
     )
 
-    model.fit(X_dense, y)  # Train on the full dataset
+    dense_transformer = FunctionTransformer(sparse_to_dense_array, accept_sparse=True,validate=False,  check_inverse=False)
 
-    return model
+    pipeline_xgboost = Pipeline([
+        ("tfidf", vectorizer),
+        ('dense', dense_transformer),
+        ("logreg", model)
+    ])
+
+    pipeline_xgboost.fit(X, y)  # Train on the full dataset
+
+    return pipeline_xgboost
 
 
 if __name__ == "__main__":
@@ -176,6 +185,5 @@ if __name__ == "__main__":
     # Retrain the model on the full dataset
     final_model = retrain_xgboost_model(df_full, fitted_vectorizer)
 
-    dump(final_model, "xgboost_model.joblib")
-    dump(fitted_vectorizer, "tfidf_vectorizer.joblib")
+    dump(final_model, "xgboost_model_pipeline.joblib")
     print("\nFinal model retrained and saved.")

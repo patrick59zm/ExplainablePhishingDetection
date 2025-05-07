@@ -40,11 +40,11 @@ def train_logistic_regression_model(
     df_train = pd.read_csv(train_data_path)
     df_test = pd.read_csv(test_data_path)
 
-    df_train = df_train[["p_label", "cleaned_text"]]
-    df_test = df_test[["p_label", "cleaned_text"]]
+    df_train = df_train[["p_label", "sterilized_text"]]
+    df_test = df_test[["p_label", "sterilized_text"]]
 
-    df_train.rename(columns={'p_label': 'Email Type', 'cleaned_text': 'Email Text'}, inplace=True)
-    df_test.rename(columns={'p_label': 'Email Type', 'cleaned_text': 'Email Text'}, inplace=True)
+    df_train.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    df_test.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
 
     # Use the column names 'Email Text' and 'Email Type' as in the original notebook
     df_train = df_train[["Email Type", "Email Text"]]
@@ -56,7 +56,7 @@ def train_logistic_regression_model(
     # 2. Feature Extraction
     # Vectorizer
     vectorizer = TfidfVectorizer(max_features=max_features, ngram_range=ngram_range)
-    X = vectorizer.fit_transform(df["Email Text"])  # Use the extracted column
+    X = vectorizer.fit_transform(df["Email Text"])  # Use the preprocessed column
     y = df["Email Type"]
 
     # 3. Data Splitting
@@ -132,9 +132,9 @@ def retrain_logistic_regression_model(
         LogisticRegression: The retrained Logistic Regression model.
     """
     # 1. Data Loading
-    df = df[["p_label", "cleaned_text"]]
+    df = df[["p_label", "sterilized_text"]]
 
-    df.rename(columns={'p_label': 'Email Type', 'cleaned_text': 'Email Text'}, inplace=True)
+    df.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
 
     # 2. Feature Extraction
     X = df["Email Text"]  # Use the fitted vectorizer
