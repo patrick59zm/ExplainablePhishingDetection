@@ -152,13 +152,8 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
         y_pred = []
         for i in range(len(X_test)):
             pred = phishing_pipeline(X_test[i])[0]
-            neg_score = pred[0]["score"] 
-            pos_score = pred[1]["score"]
-            #print(f"neg_score: {neg_score}, pos_score: {pos_score}")
-            if neg_score > pos_score:
-                y_pred.append(0)
-            else:
-                y_pred.append(1)
+            label = 1 if pred[0]['label'] == "LABEL_1" else 0
+            y_pred.append(label)
         print(classification_report(y_test, y_pred))
 
 
