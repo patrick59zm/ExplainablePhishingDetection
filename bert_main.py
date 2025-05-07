@@ -12,6 +12,7 @@ np.random.seed(seed)
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument('black_box', action='store_true')
 parser.add_argument('--train', action='store_true')
 parser.add_argument('--epochs', type=int, default=10)
 parser.add_argument('--test', action='store_true')
@@ -35,27 +36,27 @@ elif torch.backends.mps.is_available():
 
 
 if __name__ == "__main__":
-
-    train_dataset, test_dataset = load_dataset_from_csv(seed=seed, black_box=True, percent_dataset=args.percent_dataset)
-    
-    model_name = "distilbert-base-uncased"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
-    model.to(device)
-    model.config.problem_type = "single_label_classification"
-
-    def tokenize_function(examples):
-        return tokenizer(examples["cleaned_text"], truncation=True, padding=True)
-
-    encoded_dataset_train = train_dataset.map(tokenize_function, batched=True)
-    encoded_dataset_test = test_dataset.map(tokenize_function, batched=True)
-
-    if args.train:
-        train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=args.epochs)
-    if args.test:
-        test_bert(encoded_dataset_test, tokenizer, args.shap, args.lime, args.samples_to_explain, args.steps, args.checkpoint_name, additional_metrics=args.additional_metrics)
-
-
+    if args.black_box:
+        train_dataset, test_dataset = load_dataset_from_csv(seed=seed, black_box=True, percent_dataset=args.percent_dataset)
         
+        model_name = "distilbert-base-uncased"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
+        model.to(device)
+        model.config.problem_type = "single_label_classification"
+
+        def tokenize_function(examples):
+            return tokenizer(examples["cleaned_text"], truncation=True, padding=True)
+
+        encoded_dataset_train = train_dataset.map(tokenize_function, batched=True)
+        encoded_dataset_test = test_dataset.map(tokenize_function, batched=True)
+
+        if args.train:
+            train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=args.epochs)
+        if args.test:
+            test_bert(encoded_dataset_test, tokenizer, args.shap, args.lime, args.samples_to_explain, args.steps, args.checkpoint_name, additional_metrics=args.additional_metrics)
+    else:
+        ### TODO: Pipeline for white box models ###
+        pass 
 
         
