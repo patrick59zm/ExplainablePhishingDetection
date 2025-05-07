@@ -1,7 +1,7 @@
 import random
 import gradio as gr
 from Web_app.get_llm_prediction import call_api_and_process_output
-from models.logreg_explainability import get_logreg_mail_specific_explanation
+from models.logreg_explainability import get_logreg_mail_specific_explanation, get_logreg_prediction_probabilities
 import joblib
 
 
@@ -12,8 +12,25 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         verdict = "Phishing" if p_label == 1 else "Safe"
         explanation = ", ".join(reasons) if reasons else "No explanation"
     elif model_name == "logreg":
-        verdict, confidence, reasons = get_logreg_mail_specific_explanation(raw_email, pipeline=joblib.load("models/logistic_regression_model_pipeline.joblib"))
-        explanation = ", ".join(reasons) if reasons else "No explanation"
+        pipeline=joblib.load("models/logistic_regression_model_pipeline.joblib")
+        confidence_info = get_logreg_prediction_probabilities(raw_email, pipeline)
+
+        if confidence_info:
+            confidence_details = confidence_info  # Store the full dict
+            predicted_class = confidence_info.get("predicted_class")
+            if predicted_class == 1:
+                verdict = "Phishing"
+                confidence =  confidence_details['phishing_probability']
+            elif predicted_class == 0:
+                verdict = "Safe"
+                confidence = confidence_details['safe_probability']
+
+        explanation_tuples = get_logreg_mail_specific_explanation(raw_email, pipeline)
+        formatted_reasons_list = []
+
+        for feature, coeff, tfidf in explanation_tuples:
+            formatted_reasons_list.append(f"'{feature}' (Coeff: {coeff:.3f}, TF-IDF: {tfidf:.2f})")
+        explanation = ", ".join(formatted_reasons_list)
     else:
         verdict = random.choice(["safe", "phishing"])
         confidence = random.random()
