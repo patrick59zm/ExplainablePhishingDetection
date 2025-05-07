@@ -39,6 +39,6 @@ def bert_predict(email, explanation_method=None):
         class_names=["legit", "phishing"],
         )
         explanation = lime_explainer.explain_instance(email,lambda x: huggingface_predict_proba(x, phishing_pipeline), num_features=1000, num_samples=5000)  
-
+        explanation = explanation.as_list()
 
     return result, explanation
