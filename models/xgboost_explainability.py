@@ -28,7 +28,7 @@ def load_xgboost_pipeline(pipeline_path=DEFAULT_XGBOOST_PIPELINE_PATH):
     try:
         loaded_pipeline = joblib.load(pipeline_path)
         print(f"XGBoost pipeline loaded from: {pipeline_path}")
-        expected_steps = ['tfidf', 'dense', 'logreg']
+        expected_steps = ['tfidf', 'dense', 'xgboost']
         if not all(step in loaded_pipeline.named_steps for step in expected_steps):
             print(f"Warning: Loaded pipeline does not seem to have all expected steps: {expected_steps}.")
             print(f"Found steps: {list(loaded_pipeline.named_steps.keys())}")
@@ -94,7 +94,7 @@ def get_xgboost_general_explainability(pipeline, top_n=20, importance_type='gain
         print("Error: XGBoost pipeline not loaded.")
         return None
     try:
-        xgb_model_step_name = 'logreg'
+        xgb_model_step_name = 'xgboost'
         if xgb_model_step_name not in pipeline.named_steps:
             # Fallback if the user named it differently, e.g. 'xgb_classifier'
             potential_names = [name for name in pipeline.named_steps if
@@ -172,8 +172,7 @@ def get_xgboost_mail_specific_inherent_explanation(email_text, pipeline, top_n_i
         return None
     try:
         vectorizer = pipeline.named_steps['tfidf']
-        # Based on your training code, the XGBoost model step is named 'logreg'
-        xgb_model_step_name = 'logreg'
+        xgb_model_step_name = 'xgboost'
         if xgb_model_step_name not in pipeline.named_steps:
             potential_names = [name for name in pipeline.named_steps if
                                isinstance(pipeline.named_steps[name], xgb.XGBClassifier)]
