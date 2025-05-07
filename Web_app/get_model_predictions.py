@@ -3,9 +3,10 @@ from transformers import pipeline, AutoTokenizer
 import pandas as pd
 import shap
 import lime.lime_text
+from models.bert import huggingface_predict_proba
 
 
-def bert_predict(email, explanaination_method=None):
+def bert_predict(email, explanation_method=None):
     explanation = None
     model_name = "distilbert-base-uncased"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -19,12 +20,11 @@ def bert_predict(email, explanaination_method=None):
     )
     # Make prediction
     prediction = phishing_pipeline(email)
-    print(prediction)
     # Extract the predicted class and score
     label = "phishing" if prediction[0][0]['label'] == "LABEL_1" else "legit"
     result = (label, prediction[0][0]['score'])
     
-    if explanaination_method == "shap":
+    if explanation_method == "shap":
         masker = shap.maskers.Text(tokenizer=tokenizer)
         explainer = shap.Explainer(
             phishing_pipeline,  
@@ -34,6 +34,11 @@ def bert_predict(email, explanaination_method=None):
     
         shap_values = explainer([email])
         explanation = shap_values
-    
+    elif explanation_method == "lime":
+        lime_explainer = lime.lime_text.LimeTextExplainer(
+        class_names=["legit", "phishing"],
+        )
+        explanation = lime_explainer.explain_instance(email,lambda x: huggingface_predict_proba(x, phishing_pipeline), num_features=1000, num_samples=5000)  
+
 
     return result, explanation
