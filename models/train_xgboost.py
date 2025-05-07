@@ -16,8 +16,9 @@ def sparse_to_dense_array(sparse_matrix):
 def train_xgboost_model(train_data_path: str, test_data_path: str,
                        max_features: int = 20000,
                        max_depth: int = 6, learning_rate: float = 0.1,
-                       n_estimators: int = 800,
-                       plot_importance: bool = True) -> tuple[XGBClassifier, TfidfVectorizer]:
+                       n_estimators: int = 1300,
+                       plot_importance: bool = True,
+                       frac: float = 1.00) -> tuple[XGBClassifier, TfidfVectorizer]:
     """
     Trains an XGBoost model to classify emails as phishing or safe, using unigrams and bigrams.
 
@@ -29,6 +30,7 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
         learning_rate (float, optional): Learning rate for XGBoost. Defaults to 0.1.
         n_estimators (int, optional): Number of trees in the XGBoost ensemble. Defaults to 800.
         plot_importance (bool, optional): Whether to plot the feature importance. Defaults to True.
+        frac (float, optional): Fraction of dataset to use. Defaults to 1.00.
 
     Returns:
         xgb.XGBClassifier: The trained XGBoost model.
@@ -45,6 +47,9 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
 
     df_train['Email Text'] = df_train['Email Text'].fillna('')
     df_test['Email Text'] = df_test['Email Text'].fillna('')
+
+    df_train = df_train.sample(frac=frac, random_state=42)
+    df_test = df_test.sample(frac=frac, random_state=42)
 
     # Combine training and testing data for consistent preprocessing and vectorization
     df = pd.concat([df_train, df_test], ignore_index=True)
@@ -181,10 +186,11 @@ if __name__ == "__main__":
     test_data_path = "../data/test/test_dataset.csv"
 
     # Train the model
-    trained_model, fitted_vectorizer = train_xgboost_model(train_data_path, test_data_path)
+    trained_model, fitted_vectorizer = train_xgboost_model(train_data_path, test_data_path, frac=0.05)
 
     # Load the entire dataset for retraining
     df_full = pd.concat([pd.read_csv(train_data_path), pd.read_csv(test_data_path)], ignore_index=True)
+    df_full = df_full.sample(frac=0.05, random_state=42)
 
     # Retrain the model on the full dataset
     final_model = retrain_xgboost_model(df_full, fitted_vectorizer)

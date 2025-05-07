@@ -5,7 +5,6 @@ import joblib
 DEFAULT_LOGREG_PIPELINE_PATH = "logistic_regression_model_pipeline.joblib"
 
 
-# --- 1. Load Logistic Regression Pipeline ---
 def load_logistic_regression_pipeline(pipeline_path=DEFAULT_LOGREG_PIPELINE_PATH):
     """
     Loads the trained scikit-learn pipeline for Logistic Regression.
@@ -20,7 +19,6 @@ def load_logistic_regression_pipeline(pipeline_path=DEFAULT_LOGREG_PIPELINE_PATH
     try:
         loaded_pipeline = joblib.load(pipeline_path)
         print(f"Logistic Regression pipeline loaded from: {pipeline_path}")
-        # Verify expected steps (optional, but good for debugging)
         if not all(step in loaded_pipeline.named_steps for step in ['tfidf', 'scaler', 'logreg']):
             print("Warning: Loaded pipeline does not seem to have the expected steps: 'tfidf', 'scaler', 'logreg'.")
         return loaded_pipeline
@@ -53,11 +51,8 @@ def get_logreg_prediction_probabilities(email_text, pipeline):
         print("Error: Logistic Regression pipeline not loaded.")
         return None
     try:
-        # The pipeline handles vectorization and scaling internally
-        # It expects a list of documents (even if it's just one)
         probabilities = pipeline.predict_proba([email_text])
 
-        # Assuming the pipeline's classes_ are [0, 1] where 0=safe, 1=phishing
         safe_prob = probabilities[0, 0]
         phishing_prob = probabilities[0, 1]
 
@@ -71,7 +66,6 @@ def get_logreg_prediction_probabilities(email_text, pipeline):
         return None
 
 
-# --- 3. Get General Model Explainability (Global Coefficients) ---
 def get_logreg_general_explainability(pipeline, top_n=20):
     """
     Provides global feature importances (coefficients) from the Logistic Regression model
@@ -114,7 +108,6 @@ def get_logreg_general_explainability(pipeline, top_n=20):
         return None
 
 
-# --- 4. Get Mail-Specific Explanation (Feature Coefficients for Present Words) ---
 def get_logreg_mail_specific_explanation(email_text, pipeline, top_n_instance=15):
     """
     Provides an inherent explanation for a specific email by showing the
@@ -144,18 +137,12 @@ def get_logreg_mail_specific_explanation(email_text, pipeline, top_n_instance=15
             print("Error: The 'tfidf' step in the pipeline cannot provide feature names.")
             return None
 
-        # 1. Get all feature names and their global coefficients from the model
         all_feature_names = vectorizer.get_feature_names_out()
         all_coefficients = logreg_model.coef_[0]
         feature_to_coeff_map = dict(zip(all_feature_names, all_coefficients))
 
-        # 2. Transform the specific email text to get its TF-IDF scores
-        # The transform method of TfidfVectorizer returns a sparse matrix (1, n_features)
         tfidf_vector = vectorizer.transform([email_text])
 
-        # 3. Identify features present in this specific email and their TF-IDF scores
-        # For a sparse matrix, tfidf_vector.indices gives column indices of non-zero elements
-        # tfidf_vector.data gives the corresponding non-zero TF-IDF scores
         present_feature_indices = tfidf_vector.indices
         present_feature_tfidf_scores = tfidf_vector.data
 
@@ -166,7 +153,6 @@ def get_logreg_mail_specific_explanation(email_text, pipeline, top_n_instance=15
             tfidf_score = present_feature_tfidf_scores[i]
             instance_explanation.append((feature_name, coefficient, tfidf_score))
 
-        # Sort by absolute coefficient value to see most impactful words in this email
         instance_explanation.sort(key=lambda x: abs(x[1]), reverse=True)
 
         return instance_explanation[:top_n_instance]
