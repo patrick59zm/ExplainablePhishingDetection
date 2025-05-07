@@ -3,6 +3,13 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from data.load_dataset import load_dataset_from_csv
 from models.bert import train_bert, test_bert
+import numpy as np
+
+
+seed = 42
+torch.manual_seed(seed)
+np.random.seed(seed)
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train', action='store_true')
@@ -29,7 +36,7 @@ elif torch.backends.mps.is_available():
 
 if __name__ == "__main__":
 
-    train_dataset, test_dataset = load_dataset_from_csv(black_box=True, percent_dataset=args.percent_dataset)
+    train_dataset, test_dataset = load_dataset_from_csv(seed=seed, black_box=True, percent_dataset=args.percent_dataset)
     
     model_name = "distilbert-base-uncased"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
