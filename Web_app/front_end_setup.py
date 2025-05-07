@@ -1,8 +1,17 @@
+import os
 import random
 import gradio as gr
-from Web_app.get_llm_prediction import call_api_and_process_output
+from openai import OpenAI
+
+from dotenv import load_dotenv # Import the library
 from models.logreg_explainability import get_logreg_mail_specific_explanation, get_logreg_prediction_probabilities
 import joblib
+
+load_dotenv()
+api_key = os.getenv("DEEPSEEK_API_KEY")
+client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+
+from Web_app.get_llm_prediction import call_api_and_process_output
 
 
 def classify_and_explain_email(raw_email: str, model_name: str, explain_level: str):
@@ -12,7 +21,7 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         verdict = "Phishing" if p_label == 1 else "Safe"
         explanation = ", ".join(reasons) if reasons else "No explanation"
     elif model_name == "logreg":
-        pipeline=joblib.load("models/logistic_regression_model_pipeline.joblib")
+        pipeline=joblib.load("../models/logistic_regression_model_pipeline.joblib")
         confidence_info = get_logreg_prediction_probabilities(raw_email, pipeline)
 
         if confidence_info:

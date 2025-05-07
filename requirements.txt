@@ -17,3 +17,4 @@ gradio~=5.29.0
 bs4~=0.0.2
 joblib~=1.4.2
 tqdm~=4.67.1
+python-dotenv~=1.1.0
