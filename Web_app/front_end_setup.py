@@ -1,7 +1,8 @@
 import random
 import gradio as gr
-from get_llm_prediction import call_api_and_process_output
+from Web_app.get_llm_prediction import call_api_and_process_output
 from models.logreg_explainability import get_logreg_mail_specific_explanation
+import joblib
 
 
 def classify_and_explain_email(raw_email: str, model_name: str, explain_level: str):
@@ -11,7 +12,7 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         verdict = "Phishing" if p_label == 1 else "Safe"
         explanation = ", ".join(reasons) if reasons else "No explanation"
     elif model_name == "logreg":
-        verdict, confidence, reasons = get_logreg_mail_specific_explanation(raw_email)
+        verdict, confidence, reasons = get_logreg_mail_specific_explanation(raw_email, pipeline=joblib.load("models/logistic_regression_model_pipeline.joblib"))
         explanation = ", ".join(reasons) if reasons else "No explanation"
     else:
         verdict = random.choice(["safe", "phishing"])

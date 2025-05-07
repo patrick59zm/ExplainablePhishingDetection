@@ -108,7 +108,7 @@ def get_logreg_general_explainability(pipeline, top_n=20):
         return None
 
 
-def get_logreg_mail_specific_explanation(email_text, pipeline=joblib.load("logistic_regression_model_pipeline.joblib"), top_n_instance=15):
+def get_logreg_mail_specific_explanation(email_text, pipeline, top_n_instance=15):
     """
     Provides an inherent explanation for a specific email by showing the
     coefficients of the features (words/n-grams) present in that email.
