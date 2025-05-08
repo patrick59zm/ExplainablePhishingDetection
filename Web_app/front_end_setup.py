@@ -2,7 +2,7 @@ import os
 import random
 import gradio as gr
 from openai import OpenAI
-
+from pathlib import Path
 from dotenv import load_dotenv # Import the library
 from models.logreg_explainability import get_logreg_mail_specific_explanation, get_logreg_prediction_probabilities
 import joblib
@@ -20,8 +20,17 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         p_label, confidence, reasons = call_api_and_process_output(raw_email)
         verdict = "Phishing" if p_label == 1 else "Safe"
         explanation = ", ".join(reasons) if reasons else "No explanation"
-    elif model_name == "logreg":
-        pipeline=joblib.load("../models/logistic_regression_model_pipeline.joblib")
+    elif model_name == "Logistic Regression":
+        possible_paths = [Path("models/logistic_regression_model_pipeline.joblib"), Path("models\\logistic_regression_model_pipeline.joblib"),]
+
+        pipeline = None
+        for path in possible_paths:
+            if path.exists():
+                pipeline = joblib.load(path)
+                break
+        if pipeline is None:
+            raise FileNotFoundError("Path not found")
+
         confidence_info = get_logreg_prediction_probabilities(raw_email, pipeline)
 
         if confidence_info:
@@ -92,7 +101,7 @@ with gr.Blocks(theme="default") as demo:
                 with gr.TabItem("Settings"):
                     model_selector = gr.Dropdown(
                         label="Choose Model",
-                        choices=["Zero-shot SOTA-LLM", "logreg", "modelC"],
+                        choices=["Zero-shot SOTA-LLM", "Logistic Regression", "modelC"],
                         value="Zero-shot SOTA-LLM"
                     )
                     explanation_radio = gr.Radio(
