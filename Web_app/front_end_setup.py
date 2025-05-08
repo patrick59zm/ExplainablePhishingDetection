@@ -53,12 +53,13 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         for feature, coeff, tfidf in explanation_tuples:
             formatted_reasons_list.append(f"'{feature}' (Coeff: {coeff:.3f}, TF-IDF: {tfidf:.2f})")
         explanation = ", ".join(formatted_reasons_list)
-    elif model_name == "BERT":
+    elif model_name[:4] == "BERT":
+
         # Call your bert_predict function directly
-        (label_str, conf), expl = bert_predict(raw_email)
+        (label_str, conf), expl = bert_predict(raw_email, model_name[5:].lower())
         verdict = "Phishing" if label_str == "phishing" else "Safe"
         confidence = conf
-        explanation = "Empty"
+        explanation = expl
     else:
         verdict = random.choice(["safe", "phishing"])
         confidence = random.random()
@@ -100,7 +101,7 @@ with gr.Blocks(theme="default") as demo:
                 with gr.TabItem("Settings"):
                     model_selector = gr.Dropdown(
                         label="Choose Model",
-                        choices=["Zero-shot SOTA-LLM", "Logistic Regression", "Bert"],
+                        choices=["Zero-shot SOTA-LLM", "Logistic Regression", "BERT-LIME", "BERT-SHAP"],
                         value="Zero-shot SOTA-LLM"
                     )
                     explanation_radio = gr.Radio(
