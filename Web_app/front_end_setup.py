@@ -12,7 +12,7 @@ api_key = os.getenv("DEEPSEEK_API_KEY")
 client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
 
 from Web_app.get_llm_prediction import call_api_and_process_output
-
+from Web_app.chat_bot import call_chat_bot
 
 def classify_and_explain_email(raw_email: str, model_name: str, explain_level: str):
     """Return a random verdict and confidence."""
@@ -21,7 +21,8 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         verdict = "Phishing" if p_label == 1 else "Safe"
         explanation = ", ".join(reasons) if reasons else "No explanation"
     elif model_name == "Logistic Regression":
-        possible_paths = [Path("models/logistic_regression_model_pipeline.joblib"), Path("models\\logistic_regression_model_pipeline.joblib"),]
+        possible_paths = [Path("models/logistic_regression_model_pipeline.joblib")
+                            , Path("models\\logistic_regression_model_pipeline.joblib"),]
 
         pipeline = None
         for path in possible_paths:
@@ -57,31 +58,19 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         explanation = base + " " + "; ".join(details)
     return verdict, confidence, explanation
 
-def chat_response(question, history, context):
-    """Return a canned chat response incorporating context."""
-    snippet = context.get("email", "<no email>")[:30].replace("\n", " ") + "..."
-    question = f'Your question: "{question}"'
-    reply = f"Reply: '{question}'"
-    history = history or []
-    history.append((question, reply))
-    return history
-
 def detect_and_explain(raw_email: str, model_name: str, explain_level: str):
     """Classify the email and return stubbed verdict + explanation."""
     verdict, confidence, explanation = classify_and_explain_email(raw_email, model_name, explain_level)
     label = f"{verdict.capitalize()} ({confidence * 100:.0f}% confidence)"
     return label, explanation
 
-def handle_chat(question, history, raw_email, model_name, explain_level):
+def handle_chat(question, history, raw_email, model_name, explain_level, verdict, explanation):
     """Respond to chat queries, echoing context."""
-    context = {
-        "email": raw_email,
-        "model": model_name,
-        "explanation_level": explain_level
-    }
-    return chat_response(question, history, context)
-
-
+    context = {"email": raw_email, "model": model_name, "explanation_level": explain_level, "verdict": verdict, "explanation": explanation}
+    reply = call_chat_bot(question, history, context)
+    history = history or []
+    history.append((question, reply))
+    return history
 
 
 with gr.Blocks(theme="default") as demo:
@@ -124,7 +113,7 @@ with gr.Blocks(theme="default") as demo:
             )
             user_msg.submit(
                 fn=handle_chat,
-                inputs=[user_msg, chatbot, email_input, model_selector, explanation_radio],
+                inputs=[user_msg, chatbot, email_input, model_selector, explanation_radio, verdict_output, explanation_output],
                 outputs=chatbot
             )
 
