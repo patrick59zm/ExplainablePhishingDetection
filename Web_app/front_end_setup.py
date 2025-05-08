@@ -13,6 +13,9 @@ client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
 
 from Web_app.get_llm_prediction import call_api_and_process_output
 from Web_app.chat_bot import call_chat_bot
+from Web_app.get_model_predictions import bert_predict
+from Web_app.explanation_processing import explanation_processing
+
 
 def classify_and_explain_email(raw_email: str, model_name: str, explain_level: str):
     """Return a random verdict and confidence."""
@@ -50,6 +53,12 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         for feature, coeff, tfidf in explanation_tuples:
             formatted_reasons_list.append(f"'{feature}' (Coeff: {coeff:.3f}, TF-IDF: {tfidf:.2f})")
         explanation = ", ".join(formatted_reasons_list)
+    elif model_name == "BERT":
+        # Call your bert_predict function directly
+        (label_str, conf), expl = bert_predict(raw_email)
+        verdict = "Phishing" if label_str == "phishing" else "Safe"
+        confidence = conf
+        explanation = "Empty"
     else:
         verdict = random.choice(["safe", "phishing"])
         confidence = random.random()
@@ -62,6 +71,7 @@ def detect_and_explain(raw_email: str, model_name: str, explain_level: str):
     """Classify the email and return stubbed verdict + explanation."""
     verdict, confidence, explanation = classify_and_explain_email(raw_email, model_name, explain_level)
     label = f"{verdict.capitalize()} ({confidence * 100:.0f}% confidence)"
+    explanation = explanation_processing(explain_level, model_name, explanation, verdict, raw_email)
     return label, explanation
 
 def handle_chat(question, history, raw_email, model_name, explain_level, verdict, explanation):
@@ -90,13 +100,13 @@ with gr.Blocks(theme="default") as demo:
                 with gr.TabItem("Settings"):
                     model_selector = gr.Dropdown(
                         label="Choose Model",
-                        choices=["Zero-shot SOTA-LLM", "Logistic Regression", "modelC"],
+                        choices=["Zero-shot SOTA-LLM", "Logistic Regression", "Bert"],
                         value="Zero-shot SOTA-LLM"
                     )
                     explanation_radio = gr.Radio(
                         label="Explanation Type",
-                        choices=["Raw XAI output", "Enhance Explanation", "Simplified Explanation"],
-                        value="Simplified Explanation"
+                        choices=["Raw XAI output", "Slightly enhanced XAI output", "Greatly simplified explanation"],
+                        value="Raw XAI output"
                     )
 
             analyze_btn.click(
