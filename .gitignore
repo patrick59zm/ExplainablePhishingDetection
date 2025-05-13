@@ -3,7 +3,7 @@ data/extracted
 data/extracted_combined
 data/train
 data/test
-models/bert_checkpoints
+models/bert_checkpoints*
 pvenv
 results
 __pycache__

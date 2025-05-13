@@ -23,6 +23,7 @@ parser.add_argument('--checkpoint_name', type=str, default=None, help='Name of t
 parser.add_argument('--samples_to_explain', type=int, default=100, )
 parser.add_argument('--steps', type=int, default=5)
 parser.add_argument('--percent_dataset', type=int, default=100)
+parser.add_argument('--machine_generated', action='store_true')
 args = parser.parse_args()
 
 
@@ -37,8 +38,8 @@ elif torch.backends.mps.is_available():
 
 if __name__ == "__main__":
     if args.black_box:
-        train_dataset, test_dataset = load_dataset_from_csv(seed=seed, black_box=True, percent_dataset=args.percent_dataset)
-        
+        train_dataset, test_dataset = load_dataset_from_csv(seed=seed, black_box=True, percent_dataset=args.percent_dataset, machine_generated = args.machine_generated)
+       
         model_name = "distilbert-base-uncased"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
@@ -52,11 +53,9 @@ if __name__ == "__main__":
         encoded_dataset_test = test_dataset.map(tokenize_function, batched=True)
 
         if args.train:
-            train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=args.epochs)
+            train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=args.epochs, machine_generated=args.machine_generated)
         if args.test:
             test_bert(encoded_dataset_test, tokenizer, args.shap, args.lime, args.samples_to_explain, args.steps, args.checkpoint_name, additional_metrics=args.additional_metrics)
     else:
         ### TODO: Pipeline for white box models ###
-        pass 
-
-        
+        pass

@@ -28,31 +28,33 @@ def huggingface_predict_proba(texts, phishing_pipeline):
         results.append(proba)
     return np.array(results)
 
-def train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=10):
+def train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=10, machine_generated=False):
     # Rename columns so Trainer knows which are inputs vs. labels
-    encoded_dataset_train = encoded_dataset_train.rename_column("p_label", "labels")
+    label = "g_label" if machine_generated else "p_label"
+    encoded_dataset_train = encoded_dataset_train.rename_column(label, "labels")
     encoded_dataset_train.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
-    encoded_dataset_test = encoded_dataset_test.rename_column("p_label", "labels")
+    encoded_dataset_test = encoded_dataset_test.rename_column(label, "labels")
     encoded_dataset_test.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
 
     print(encoded_dataset_train)    # Training arguments
+    output_dir = "models/bert_checkpoints_machine_generated" if machine_generated else "models/bert_checkpoints_phishing"
     training_args = TrainingArguments(
-        output_dir="models/bert_checkpoints",
-        eval_strategy="epoch", 
+        output_dir=output_dir,
+        eval_strategy="epoch",
         learning_rate=2e-5,
         per_device_train_batch_size=8,
         num_train_epochs=epochs,
         weight_decay=0.01,
         logging_steps=50,
-        save_steps=1000,
-        
+        save_steps=1000
+       
     )
     # Initialize Trainer
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=encoded_dataset_train,
-        eval_dataset=encoded_dataset_test, 
+        eval_dataset=encoded_dataset_test,
     )
 
     trainer.train()
@@ -69,7 +71,7 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
         "text-classification",
         model=f"models/bert_checkpoints/{checkpoint_name}",  
         tokenizer=tokenizer,
-        top_k=None,     
+        top_k=None,    
         max_length=512,
         truncation=True
     )
@@ -109,7 +111,7 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
         )
         for i in range(len(fractions_removed_list)):
             print(f"Fraction removed: {fractions_removed_list[i]}, LeRF Performance: {LeRF_performance_list[i]}")
-        
+       
         results_df = pd.DataFrame({
             'Fraction Removed': fractions_removed_list,
             'MoRF_Performance': MoRF_performance_list,
@@ -125,20 +127,20 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
         for i in range(samples_to_explain):
             lime_val = lime_explainer.explain_instance(X_test[i],lambda x: huggingface_predict_proba(x, phishing_pipeline), num_features=1000, num_samples=5000)  
             lime_val_list.append(lime_val)
-        
+       
         # MoRF Evaluation
         print("MoRF Evaluation")
         fractions_removed, MoRF_performances = moRF_LeRF_LIME(phishing_pipeline, X_test[:samples_to_explain], y_test, lime_val_list, metric=accuracy_score, steps=steps, MoRF=True)
-        
+       
         for i in range(len(fractions_removed)):
             print(f"Fraction removed: {fractions_removed[i]}, MoRF Performance: {MoRF_performances[i]}")
-            
+           
         # LeRF Evaluation
         print("LeRF Evaluation")
         _ , LeRF_performances = moRF_LeRF_LIME(phishing_pipeline, X_test[:samples_to_explain], y_test, lime_val_list, metric=accuracy_score, steps=steps, MoRF=False)
         for i in range(len(fractions_removed)):
             print(f"Fraction removed: {fractions_removed[i]}, LeRF Performance: {LeRF_performances[i]}")
-        
+       
         # Save the results to a CSV file
         results_df = pd.DataFrame({
             'Fraction Removed': fractions_removed,
@@ -155,5 +157,9 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
             label = 1 if pred[0]['label'] == "LABEL_1" else 0
             y_pred.append(label)
         print(classification_report(y_test, y_pred))
+
+
+
+
 
 
