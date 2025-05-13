@@ -59,17 +59,19 @@ def train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=10, ma
 
     trainer.train()
 
-def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, samples_to_explain=100, steps=5, checkpoint_name="", additional_metrics=False):
+def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, samples_to_explain=100, steps=5, checkpoint_name="", additional_metrics=False, machine_generated=False):
     # Evaluate the model
     # Set test dataset
-    X_test = encoded_dataset_test["cleaned_text"]
-    y_test = encoded_dataset_test["p_label"]
+    label = "g_label" if machine_generated else "p_label"
+    checkpoint_dir = "models/bert_checkpoints_machine_generated" if machine_generated else "models/bert_checkpoints_phishing"
 
+    X_test = encoded_dataset_test["cleaned_text"]
+    y_test = encoded_dataset_test[label]
 
     # Create pipeline for SHAP (so that the features passed to SHAP are the words and not the tokens)
     phishing_pipeline = pipeline(
         "text-classification",
-        model=f"models/bert_checkpoints/{checkpoint_name}",  
+        model=f"{checkpoint_dir}/{checkpoint_name}",  
         tokenizer=tokenizer,
         top_k=None,    
         max_length=512,

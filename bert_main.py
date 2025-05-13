@@ -55,7 +55,7 @@ if __name__ == "__main__":
         if args.train:
             train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=args.epochs, machine_generated=args.machine_generated)
         if args.test:
-            test_bert(encoded_dataset_test, tokenizer, args.shap, args.lime, args.samples_to_explain, args.steps, args.checkpoint_name, additional_metrics=args.additional_metrics)
+            test_bert(encoded_dataset_test, tokenizer, args.shap, args.lime, args.samples_to_explain, args.steps, args.checkpoint_name, additional_metrics=args.additional_metrics, machine_generated=args.machine_generated)
     else:
         ### TODO: Pipeline for white box models ###
         pass
