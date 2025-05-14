@@ -15,8 +15,8 @@ def sparse_to_dense_array(sparse_matrix):
 
 def train_xgboost_model(train_data_path: str, test_data_path: str,
                        max_features: int = 25000,
-                       max_depth: int = 7, learning_rate: float = 0.05,
-                       n_estimators: int = 1800,
+                       max_depth: int = 6, learning_rate: float = 0.05,
+                       n_estimators: int = 1600,
                        plot_importance: bool = True,
                        frac: float = 1.00) -> tuple[XGBClassifier, TfidfVectorizer]:
     """
@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
     # Load the entire dataset for retraining
     df_full = pd.concat([pd.read_csv(train_data_path), pd.read_csv(test_data_path)], ignore_index=True)
-    df_full = df_full.sample(frac=0.05, random_state=42)
+    df_full = df_full.sample(frac=0.50, random_state=42)
 
     # Retrain the model on the full dataset
     final_model = retrain_xgboost_model(df_full, fitted_vectorizer)

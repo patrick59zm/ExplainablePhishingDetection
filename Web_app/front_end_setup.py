@@ -7,6 +7,9 @@ from dotenv import load_dotenv # Import the library
 from models.logreg_explainability import get_logreg_mail_specific_explanation, get_logreg_prediction_probabilities
 import joblib
 
+from models.xgboost_explainability import get_xgboost_prediction_probabilities, \
+    get_xgboost_mail_specific_inherent_explanation
+
 load_dotenv()
 api_key = os.getenv("DEEPSEEK_API_KEY")
 client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
@@ -17,6 +20,14 @@ from Web_app.get_model_predictions import bert_predict
 from Web_app.explanation_processing import explanation_processing
 
 
+# This function is needed to make xgboost work
+def sparse_to_dense_array(sparse_matrix):
+    """Converts a sparse matrix to a dense numpy array."""
+    if hasattr(sparse_matrix, "toarray"):
+        return sparse_matrix.toarray()
+    return sparse_matrix
+
+
 def classify_and_explain_email(raw_email: str, model_name: str, explain_level: str):
     """Return a random verdict and confidence."""
     if model_name == "Zero-shot SOTA-LLM":
@@ -25,7 +36,8 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         explanation = ", ".join(reasons) if reasons else "No explanation"
     elif model_name == "Logistic Regression":
         possible_paths = [Path("models/logistic_regression_model_pipeline.joblib")
-                            , Path("models\\logistic_regression_model_pipeline.joblib"),]
+                            , Path("models\\logistic_regression_model_pipeline.joblib")
+                          , Path("../models/logistic_regression_model_pipeline.joblib"),]
 
         pipeline = None
         for path in possible_paths:
@@ -48,6 +60,37 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
                 confidence = confidence_details['safe_probability']
 
         explanation_tuples = get_logreg_mail_specific_explanation(raw_email, pipeline)
+        formatted_reasons_list = []
+
+        for feature, coeff, tfidf in explanation_tuples:
+            formatted_reasons_list.append(f"'{feature}' (Coeff: {coeff:.3f}, TF-IDF: {tfidf:.2f})")
+        explanation = ", ".join(formatted_reasons_list)
+    elif model_name == "XGBoost":
+        possible_paths = [Path("models/xgboost_model_pipeline.joblib")
+                            , Path("models\\xgboost_model_pipeline.joblib")
+                          , Path("../models/xgboost_model_pipeline.joblib"),]
+
+        pipeline = None
+        for path in possible_paths:
+            if path.exists():
+                pipeline = joblib.load(path)
+                break
+        if pipeline is None:
+            raise FileNotFoundError("Path not found")
+
+        confidence_info = get_xgboost_prediction_probabilities(raw_email, pipeline)
+
+        if confidence_info:
+            confidence_details = confidence_info  # Store the full dict
+            predicted_class = confidence_info.get("predicted_class")
+            if predicted_class == 1:
+                verdict = "Phishing"
+                confidence =  confidence_details['phishing_probability']
+            elif predicted_class == 0:
+                verdict = "Safe"
+                confidence = confidence_details['safe_probability']
+
+        explanation_tuples = get_xgboost_mail_specific_inherent_explanation(raw_email, pipeline)
         formatted_reasons_list = []
 
         for feature, coeff, tfidf in explanation_tuples:
@@ -101,7 +144,7 @@ with gr.Blocks(theme="default") as demo:
                 with gr.TabItem("Settings"):
                     model_selector = gr.Dropdown(
                         label="Choose Model",
-                        choices=["Zero-shot SOTA-LLM", "Logistic Regression", "BERT-LIME", "BERT-SHAP"],
+                        choices=["Zero-shot SOTA-LLM", "Logistic Regression", "XGBoost", "BERT-LIME", "BERT-SHAP"],
                         value="Zero-shot SOTA-LLM"
                     )
                     explanation_radio = gr.Radio(
