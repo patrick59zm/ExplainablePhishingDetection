@@ -46,7 +46,7 @@ def train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=10, ma
         num_train_epochs=epochs,
         weight_decay=0.01,
         logging_steps=50,
-        save_steps=1000
+        save_steps=1
        
     )
     # Initialize Trainer
@@ -63,7 +63,7 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
     # Evaluate the model
     # Set test dataset
     label = "g_label" if machine_generated else "p_label"
-    checkpoint_dir = "models/bert_checkpoints_machine_generated" if machine_generated else "models/bert_checkpoints_phishing"
+    checkpoint_dir = "models/bert_checkpoints_machine" if machine_generated else "models/bert_checkpoints_phishing"
 
     X_test = encoded_dataset_test["cleaned_text"]
     y_test = encoded_dataset_test[label]

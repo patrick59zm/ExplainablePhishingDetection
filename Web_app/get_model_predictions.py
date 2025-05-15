@@ -6,13 +6,14 @@ import lime.lime_text
 from models.bert import huggingface_predict_proba
 
 
-def bert_predict(email, explanation_method=None):
+def bert_predict(email, explanation_method=None, task="Phishing"):
+    task_name = "phishing" if task == "Phishing" else "machine"
     explanation = None
     model_name = "distilbert-base-uncased"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     phishing_pipeline = pipeline(
         "text-classification",
-        model=f"models/bert_checkpoints/checkpoint-10560",  
+        model=f"models/bert_checkpoints_{task_name}/checkpoint-{task_name}-final",  
         tokenizer=tokenizer,
         top_k=None,     
         max_length=512,

@@ -28,7 +28,7 @@ def sparse_to_dense_array(sparse_matrix):
     return sparse_matrix
 
 
-def classify_and_explain_email(raw_email: str, model_name: str, explain_level: str):
+def classify_and_explain_email(raw_email: str, model_name: str, explain_level: str, task: str):
     """Return a random verdict and confidence."""
     if model_name == "Zero-shot SOTA-LLM":
         p_label, confidence, reasons = call_api_and_process_output(raw_email)
@@ -97,9 +97,9 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
             formatted_reasons_list.append(f"'{feature}' (Coeff: {coeff:.3f}, TF-IDF: {tfidf:.2f})")
         explanation = ", ".join(formatted_reasons_list)
     elif model_name[:4] == "BERT":
-
+        
         # Call your bert_predict function directly
-        (label_str, conf), expl = bert_predict(raw_email, model_name[5:].lower())
+        (label_str, conf), expl = bert_predict(raw_email, model_name[5:].lower(),task)
         verdict = "Phishing" if label_str == "phishing" else "Safe"
         confidence = conf
         explanation = expl
@@ -111,9 +111,9 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         explanation = base + " " + "; ".join(details)
     return verdict, confidence, explanation
 
-def detect_and_explain(raw_email: str, model_name: str, explain_level: str):
+def detect_and_explain(raw_email: str, model_name: str, explain_level: str, task: str):
     """Classify the email and return stubbed verdict + explanation."""
-    verdict, confidence, explanation = classify_and_explain_email(raw_email, model_name, explain_level)
+    verdict, confidence, explanation = classify_and_explain_email(raw_email, model_name, explain_level, task)
     label = f"{verdict.capitalize()} ({confidence * 100:.0f}% confidence)"
     explanation = explanation_processing(explain_level, model_name, explanation, verdict, raw_email)
     return label, explanation
@@ -147,6 +147,11 @@ with gr.Blocks(theme="default") as demo:
                         choices=["Zero-shot SOTA-LLM", "Logistic Regression", "XGBoost", "BERT-LIME", "BERT-SHAP"],
                         value="Zero-shot SOTA-LLM"
                     )
+                    task_selector = gr.Dropdown(
+                        label="Choose Task",
+                        choices=["Phishing", "Machine Generated"],
+                        value="Phishing"
+                    )
                     explanation_radio = gr.Radio(
                         label="Explanation Type",
                         choices=["Raw XAI output", "Slightly enhanced XAI output", "Greatly simplified explanation"],
@@ -155,7 +160,7 @@ with gr.Blocks(theme="default") as demo:
 
             analyze_btn.click(
                 fn=detect_and_explain,
-                inputs=[email_input, model_selector, explanation_radio],
+                inputs=[email_input, model_selector, explanation_radio, task_selector],
                 outputs=[verdict_output, explanation_output]
             )
 
