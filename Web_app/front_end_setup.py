@@ -142,16 +142,28 @@ with gr.Blocks(theme="default") as demo:
                                                     placeholder="The reasoning will show up here", lines=6)
 
                 with gr.TabItem("Settings"):
-                    model_selector = gr.Dropdown(
-                        label="Choose Model",
-                        choices=["Zero-shot SOTA-LLM", "Logistic Regression", "XGBoost", "BERT-LIME", "BERT-SHAP"],
-                        value="Zero-shot SOTA-LLM"
-                    )
                     task_selector = gr.Dropdown(
                         label="Choose Task",
                         choices=["Phishing", "Machine Generated"],
                         value="Phishing"
                     )
+                    
+                    choices = {"Phishing": ["Zero-shot SOTA-LLM", "Logistic Regression", "XGBoost", "BERT-LIME", "BERT-SHAP"],
+                              "Machine Generated": ["BERT-LIME", "BERT-SHAP"]}
+                    def update_second(first_val):
+                        d2 = gr.Dropdown(choices[first_val], value=choices[first_val][0], label="Choose Model")
+                        return d2 
+
+                    model_selector= update_second("Phishing")
+
+                    task_selector.input(update_second, task_selector,model_selector)
+                    
+                    # model_selector = gr.Dropdown(
+                    #     label="Choose Model",
+                    #     choices=choices,
+                    #     value="Zero-shot SOTA-LLM"
+                    # )
+                    
                     explanation_radio = gr.Radio(
                         label="Explanation Type",
                         choices=["Raw XAI output", "Slightly enhanced XAI output", "Greatly simplified explanation"],
