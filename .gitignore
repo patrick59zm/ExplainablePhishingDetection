@@ -12,7 +12,7 @@ __pycache__
 pvenv
 myvenv
 data/setup_api_key.sh
-LLM_API_Classification/llm_results
+models/LLM_API_Classification/llm_results
 .DS_Store
 temp*
 .env
