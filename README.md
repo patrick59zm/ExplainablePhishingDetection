@@ -4,7 +4,7 @@
 
 # Explainable Phishing Detection
 
-### This the repo of project 11 of the ETH Data Science Lab spring 2025
+### This is the repo of project 11 of the ETH Data Science Lab spring 2025
 
 A modular project for detecting phishing and machine-generated emails using classical ML, transformer-based models, and an LLM-based API, with integrated explainability. You can preprocess data, train and evaluate multiple models, generate feature-based or natural-language explanations, and serve everything through a web interface.
 
