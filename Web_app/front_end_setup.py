@@ -30,9 +30,18 @@ def sparse_to_dense_array(sparse_matrix):
 
 def classify_and_explain_email(raw_email: str, model_name: str, explain_level: str, task: str):
     """Return a random verdict and confidence."""
+    # Homogenize the prediction labels
+    if task=="Phishing":
+        true_label="Phishing"
+        false_label="Safe"
+    else:
+        true_label="Machine Generated"
+        false_label="Not Machine Generated"
+
+
     if model_name == "Zero-shot SOTA-LLM":
-        p_label, confidence, reasons = call_api_and_process_output(raw_email)
-        verdict = "Phishing" if p_label == 1 else "Safe"
+        p_label, confidence, reasons = call_api_and_process_output(raw_email, task)
+        verdict = true_label if p_label == 1 else false_label
         explanation = ", ".join(reasons) if reasons else "No explanation"
     elif model_name == "Logistic Regression":
         possible_paths = [Path("models/logistic_regression_model_pipeline.joblib")
@@ -53,10 +62,10 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
             confidence_details = confidence_info  # Store the full dict
             predicted_class = confidence_info.get("predicted_class")
             if predicted_class == 1:
-                verdict = "Phishing"
+                verdict = true_label
                 confidence =  confidence_details['phishing_probability']
             elif predicted_class == 0:
-                verdict = "Safe"
+                verdict = false_label
                 confidence = confidence_details['safe_probability']
 
         explanation_tuples = get_logreg_mail_specific_explanation(raw_email, pipeline)
@@ -84,10 +93,10 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
             confidence_details = confidence_info  # Store the full dict
             predicted_class = confidence_info.get("predicted_class")
             if predicted_class == 1:
-                verdict = "Phishing"
+                verdict = true_label
                 confidence =  confidence_details['phishing_probability']
             elif predicted_class == 0:
-                verdict = "Safe"
+                verdict = false_label
                 confidence = confidence_details['safe_probability']
 
         explanation_tuples = get_xgboost_mail_specific_inherent_explanation(raw_email, pipeline)
@@ -100,12 +109,12 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         
         # Call your bert_predict function directly
         (label_str, conf), expl = bert_predict(raw_email, model_name[5:].lower(),task)
-        verdict = "Phishing" if label_str == "phishing" else "Safe"
+        verdict = true_label if label_str == "phishing" else false_label
         confidence = conf
         explanation = expl
     else:
-        verdict = random.choice(["safe", "phishing"])
-        confidence = random.random()
+        verdict = random.choice([false_label, true_label])
+        confidence = 0.5
         base = "This is a test explanation."
         details = [f"Detail {explain_level}"]
         explanation = base + " " + "; ".join(details)
@@ -149,7 +158,7 @@ with gr.Blocks(theme="default") as demo:
                     )
                     
                     choices = {"Phishing": ["Zero-shot SOTA-LLM", "Logistic Regression", "XGBoost", "BERT-LIME", "BERT-SHAP"],
-                              "Machine Generated": ["BERT-LIME", "BERT-SHAP"]}
+                              "Machine Generated": ["BERT-LIME", "BERT-SHAP", "Zero-shot SOTA-LLM"]}
                     def update_second(first_val):
                         d2 = gr.Dropdown(choices[first_val], value=choices[first_val][0], label="Choose Model")
                         return d2 
