@@ -1,14 +1,15 @@
 from datasets import load_dataset, Value
 
 
-def load_dataset_from_csv(seed, percent_dataset=100, machine_generated=False):
+def load_dataset_from_csv(seed, percent_dataset=100, machine_generated=False, small=False):
+    small_text = "_small" if small else ""
     dataset = "_machine_data" if machine_generated else "_dataset"
     label = "g_label" if machine_generated else "p_label"
     train_dataset = load_dataset('csv', data_files={
         'train': f'data/train/train{dataset}.csv'
     }, split=f'train')
     test_dataset = load_dataset('csv', data_files={
-        'test': f'data/test/test{dataset}.csv'
+        'test': f'data/test/test{dataset}{small_text}.csv'
     }, split=f'test')
     
     if percent_dataset < 100:

@@ -23,6 +23,7 @@ parser.add_argument('--samples_to_explain', type=int, default=100, )
 parser.add_argument('--steps', type=int, default=5)
 parser.add_argument('--percent_dataset', type=int, default=100)
 parser.add_argument('--machine_generated', action='store_true')
+parser.add_argument('--small', action='store_true')
 args = parser.parse_args()
 
 
@@ -37,7 +38,7 @@ elif torch.backends.mps.is_available():
 
 if __name__ == "__main__":
 
-    train_dataset, test_dataset = load_dataset_from_csv(seed=seed, percent_dataset=args.percent_dataset, machine_generated = args.machine_generated)
+    train_dataset, test_dataset = load_dataset_from_csv(seed=seed, percent_dataset=args.percent_dataset, machine_generated = args.machine_generated, small=args.small)
     
     model_name = "distilbert-base-uncased"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -54,4 +55,4 @@ if __name__ == "__main__":
     if args.train:
         train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=args.epochs, machine_generated=args.machine_generated)
     if args.test:
-        test_bert(encoded_dataset_test, tokenizer, args.shap, args.lime, args.samples_to_explain, args.steps, args.checkpoint_name, additional_metrics=args.additional_metrics, machine_generated=args.machine_generated)
+        test_bert(encoded_dataset_test, tokenizer, args.shap, args.lime, args.samples_to_explain, args.steps, args.checkpoint_name, additional_metrics=args.additional_metrics, machine_generated=args.machine_generated, small=args.small)

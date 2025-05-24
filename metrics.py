@@ -50,13 +50,8 @@ def moRF_LeRF_SHAP(
         for masked_sample in X_masked_list:
 
             pred = model(masked_sample)[0]
-            neg_score = pred[0]["score"] 
-            pos_score = pred[1]["score"]
-            #print(f"neg_score: {neg_score}, pos_score: {pos_score}")
-            if neg_score > pos_score:
-                y_pred.append(0)
-            else:
-                y_pred.append(1)
+            label = 1 if pred[0]['label'] == "LABEL_1" else 0
+            y_pred.append(label)
 
 
         # Evaluate performance
@@ -96,13 +91,8 @@ def moRF_LeRF_LIME(model, X_test, y_test, lime_explanations, metric=accuracy_sco
         for masked_sample in X_masked_list:
 
             pred = model(masked_sample)[0]
-            neg_score = pred[0]["score"] 
-            pos_score = pred[1]["score"]
-            #print(f"neg_score: {neg_score}, pos_score: {pos_score}")
-            if neg_score > pos_score:
-                y_pred.append(0)
-            else:
-                y_pred.append(1)
+            label = 1 if pred[0]['label'] == "LABEL_1" else 0
+            y_pred.append(label)
         
         # Evaluate performance
 

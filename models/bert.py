@@ -6,7 +6,10 @@ from sklearn.metrics import accuracy_score
 import shap
 import lime.lime_text
 import pandas as pd
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+import csv
 
 
 
@@ -59,9 +62,12 @@ def train_bert(model, encoded_dataset_train, encoded_dataset_test, epochs=10, ma
 
     trainer.train()
 
-def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, samples_to_explain=100, steps=5, checkpoint_name="", additional_metrics=False, machine_generated=False):
+def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, samples_to_explain=100, steps=5, checkpoint_name="", additional_metrics=False, machine_generated=False, small=False):
     # Evaluate the model
     # Set test dataset
+    small_title = "_small" if small else ""
+    samples_to_explain = len(encoded_dataset_test) if small else samples_to_explain
+    machine_title = "_machine" if machine_generated else "_phishing"
     label = "g_label" if machine_generated else "p_label"
     checkpoint_dir = "models/bert_checkpoints_machine" if machine_generated else "models/bert_checkpoints_phishing"
 
@@ -92,7 +98,7 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
         print("MoRF evaluation: ")
         fractions_removed_list, MoRF_performance_list = moRF_LeRF_SHAP(
             phishing_pipeline,
-            y_test,
+            y_test[:samples_to_explain],
             shap_values,
             metric=accuracy_score,
             steps=steps,
@@ -100,12 +106,12 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
         )
         for i in range(len(fractions_removed_list)):
             print(f"Fraction removed: {fractions_removed_list[i]}, MoRF Performance: {MoRF_performance_list[i]}")
-
+        
         ### LeRF evaluation ###
         print("LeRF evaluation: ")
         _, LeRF_performance_list = moRF_LeRF_SHAP(
             phishing_pipeline,
-            y_test,
+            y_test[:samples_to_explain],
             shap_values,
             metric=accuracy_score,
             steps=steps,
@@ -119,7 +125,7 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
             'MoRF_Performance': MoRF_performance_list,
             'LeRF_Performance': LeRF_performance_list
         })
-        results_df.to_csv('results/SHAP_MoRF_LeRF_results.csv', index=False)
+        results_df.to_csv(f'results/SHAP_MoRF_LeRF_results{machine_title}.csv', index=False)
     if lime_explain:
         lime_explainer = lime.lime_text.LimeTextExplainer(
         class_names=["legit", "phishing"],
@@ -149,19 +155,44 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
             'MoRF_Performance': MoRF_performances,
             'LeRF_Performance': LeRF_performances
         })
-        results_df.to_csv('results/LIME_MoRF_LeRF_results.csv', index=False)
+        results_df.to_csv(f'results/LIME_MoRF_LeRF_results{machine_title}.csv', index=False)
     if additional_metrics:
+        # Additional metrics evaluation
+        title = "machine_generated" if machine_generated else "phishing"
         print("Additional metrics evaluation")
-        # Add any additional metrics you want to compute here
-        y_pred = []
-        for i in range(len(X_test)):
-            pred = phishing_pipeline(X_test[i])[0]
-            label = 1 if pred[0]['label'] == "LABEL_1" else 0
-            y_pred.append(label)
-        print(classification_report(y_test, y_pred))
+        predictions = phishing_pipeline(X_test)  # Pass the entire X_test
+        y_pred = [1 if pred[0]['label'] == "LABEL_1" else 0 for pred in predictions]
+        report = classification_report(y_test, y_pred)
+        # Split the report into lines
+        lines = report.strip().split('\n')
+        # Extract the header and data rows
+        header = lines[0].split()
+        data = [line.split() for line in lines[2:]]
+        # Specify the output file path
+        output_file = f'results/classification_report_{title}{small_title}.csv'
+        # Write the data to a CSV file
+        with open(output_file, 'w', newline='') as file:
+            writer = csv.writer(file, delimiter='\t')
+            writer.writerow(header)
+            writer.writerows(data)
+        
+        roc_auc = roc_auc_score(y_test, y_pred)
+        with open(f'results/roc_auc_score_{title}{small_title}.csv', 'w') as f:
+            csv_writer = csv.writer(f)
+            csv_writer.writerow(['ROC AUC Score'])
+            csv_writer.writerow([roc_auc])
+        # Save confusion matrix
 
-
-
-
-
-
+        confusion = confusion_matrix(y_test, y_pred)
+        with open(f'results/confusion_matrix_{title}{small_title}.csv', 'w') as f:
+            csv_writer = csv.writer(f)
+            csv_writer.writerow(['True Positive', 'False Positive', 'False Negative', 'True Negative'])
+            csv_writer.writerow([confusion[1][1], confusion[0][1], confusion[1][0], confusion[0][0]])
+        
+        
+        
+        
+        print(report)
+        print("Confusion Matrix: ", confusion)
+        print("ROC AUC Score: ", roc_auc)
+ 
