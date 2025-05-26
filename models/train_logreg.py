@@ -40,11 +40,15 @@ def train_logistic_regression_model(
     df_train = pd.read_csv(train_data_path)
     df_test = pd.read_csv(test_data_path)
 
-    df_train = df_train[["p_label", "sterilized_text"]]
-    df_test = df_test[["p_label", "sterilized_text"]]
+    # df_train = df_train[["p_label", "sterilized_text"]]
+    # df_test = df_test[["p_label", "sterilized_text"]]
+    df_train = df_train[["g_label", "sterilized_text"]]
+    df_test = df_test[["g_label", "sterilized_text"]]
 
-    df_train.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
-    df_test.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    # df_train.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    # df_test.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    df_train.rename(columns={'g_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    df_test.rename(columns={'g_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
 
     # Use the column names 'Email Text' and 'Email Type' as in the original notebook
     df_train = df_train[["Email Type", "Email Text"]]
@@ -118,7 +122,7 @@ def retrain_logistic_regression_model(
     vectorizer: TfidfVectorizer,
     solver: str = "liblinear",  # Added solver parameter
     C: float = 1.0,  # Added C parameter
-    model_filename: str = "logistic_regression_model_pipeline.joblib",
+    model_filename: str = "logistic_regression_model_mgd_pipeline.joblib",
 ) -> Pipeline:
     """
     Retrains a Logistic Regression model on the entire dataset and saves it.
@@ -135,9 +139,12 @@ def retrain_logistic_regression_model(
         LogisticRegression: The retrained Logistic Regression model.
     """
     # 1. Data Loading
-    df = df[["p_label", "sterilized_text"]]
+    # df = df[["p_label", "sterilized_text"]]
+    df = df[["g_label", "sterilized_text"]]
 
-    df.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    # df.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    df.rename(columns={'g_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+
 
     df['Email Text'] = df['Email Text'].fillna('')
 
@@ -162,8 +169,11 @@ def retrain_logistic_regression_model(
 
 
 if __name__ == "__main__":
-    train_data_path = "../data/train/train_dataset.csv"
-    test_data_path = "../data/test/test_dataset.csv"
+    # train_data_path = "../data/train/train_dataset.csv"
+    # test_data_path = "../data/test/test_dataset.csv"
+
+    train_data_path = "../data/train/train_machine_data.csv"
+    test_data_path = "../data/test/test_machine_data.csv"
 
     # Load the dataset
     df_train = pd.read_csv(train_data_path)
@@ -174,6 +184,6 @@ if __name__ == "__main__":
     trained_model, fitted_vectorizer = train_logistic_regression_model(train_data_path, test_data_path)
 
     # Retrain the model on the full dataset
-    #final_model = retrain_logistic_regression_model(df, fitted_vectorizer)
+    final_model = retrain_logistic_regression_model(df, fitted_vectorizer)
 
     #print("\nFinal model retrained and saved.")
