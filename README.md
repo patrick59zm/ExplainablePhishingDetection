@@ -72,7 +72,7 @@ ExplainablePhishingDetection/      # Root folder
 The preprocessing scripts and raw data are provided under the `data/` directory. If you prefer not to generate your own splits, you can download preprocessed train and test sets from the following link:
 
 ```
-link_1
+[link_1](https://polybox.ethz.ch/index.php/s/oS8Ej54GpfpLsP6)
 ```
 
 See `data/README.md` for details on data sources, pipelines, and how to run `create_train_test_sets.py`.
