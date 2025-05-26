@@ -1,0 +1,8 @@
+XGBoost Results on 60% of the trainset: 
+Model Accuracy: 0.9675 
+	precision	recall	f1-score	support 
+False	0.98	0.96	0.97	12559 
+True	0.96	0.98	0.97	12779 
+accuracy		0.97     25338 
+macro_avg	0.97	0.97	0.97	25338 
+weighted_avg	0.97	0.97	0.97	25338
