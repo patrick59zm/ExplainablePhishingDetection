@@ -1,9 +1,0 @@
-Model Accuracy: 0.9634
-              precision    recall  f1-score   support
-
-       False       0.97      0.96      0.96     20931
-        True       0.96      0.97      0.96     21299
-
-    accuracy                           0.96     42230
-   macro avg       0.96      0.96      0.96     42230
-weighted avg       0.96      0.96      0.96     42230
