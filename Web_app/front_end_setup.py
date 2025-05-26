@@ -44,9 +44,14 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
         verdict = true_label if p_label == 1 else false_label
         explanation = ", ".join(reasons) if reasons else "No explanation"
     elif model_name == "Logistic Regression":
-        possible_paths = [Path("models/logistic_regression_model_pipeline.joblib")
-                            , Path("models\\logistic_regression_model_pipeline.joblib")
-                          , Path("../models/logistic_regression_model_pipeline.joblib"),]
+        if task == "Phishing":
+            possible_paths = [Path("models/logistic_regression_model_pipeline.joblib")
+                                , Path("models\\logistic_regression_model_pipeline.joblib")
+                              , Path("../models/logistic_regression_model_pipeline.joblib"),]
+        else:
+            possible_paths = [Path("models/logistic_regression_model_mgd_pipeline.joblib")
+                , Path("models\\logistic_regression_model_mgd_pipeline.joblib")
+                , Path("../models/logistic_regression_model_mgd_pipeline.joblib"), ]
 
         pipeline = None
         for path in possible_paths:
@@ -75,9 +80,14 @@ def classify_and_explain_email(raw_email: str, model_name: str, explain_level: s
             formatted_reasons_list.append(f"'{feature}' (Coeff: {coeff:.3f}, TF-IDF: {tfidf:.2f})")
         explanation = ", ".join(formatted_reasons_list)
     elif model_name == "XGBoost":
-        possible_paths = [Path("models/xgboost_model_pipeline.joblib")
-                            , Path("models\\xgboost_model_pipeline.joblib")
-                          , Path("../models/xgboost_model_pipeline.joblib"),]
+        if task == "Phishing":
+            possible_paths = [Path("models/xgboost_model_pipeline.joblib")
+                                , Path("models\\xgboost_model_pipeline.joblib")
+                              , Path("../models/xgboost_model_pipeline.joblib"),]
+        else:
+            possible_paths = [Path("models/xgboost_model_msg_pipeline.joblib")
+                , Path("models\\xgboost_model_msg_pipeline.joblib")
+                , Path("../models/xgboost_model_msg_pipeline.joblib"), ]
 
         pipeline = None
         for path in possible_paths:
@@ -158,7 +168,7 @@ with gr.Blocks(theme="default") as demo:
                     )
                     
                     choices = {"Phishing": ["Zero-shot SOTA-LLM", "Logistic Regression", "XGBoost", "BERT-LIME", "BERT-SHAP"],
-                              "Machine Generated": ["BERT-LIME", "BERT-SHAP", "Zero-shot SOTA-LLM"]}
+                              "Machine Generated": ["Logistic Regression", "XGBoost", "BERT-LIME", "BERT-SHAP", "Zero-shot SOTA-LLM"]}
                     def update_second(first_val):
                         d2 = gr.Dropdown(choices[first_val], value=choices[first_val][0], label="Choose Model")
                         return d2 
