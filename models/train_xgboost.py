@@ -186,14 +186,14 @@ if __name__ == "__main__":
     test_data_path = "../data/test/test_dataset.csv"
 
     # Train the model
-    trained_model, fitted_vectorizer = train_xgboost_model(train_data_path, test_data_path, frac=0.05)
+    trained_model, fitted_vectorizer = train_xgboost_model(train_data_path, test_data_path, frac=0.6)
 
     # Load the entire dataset for retraining
-    df_full = pd.concat([pd.read_csv(train_data_path), pd.read_csv(test_data_path)], ignore_index=True)
-    df_full = df_full.sample(frac=0.50, random_state=42)
+    #df_full = pd.concat([pd.read_csv(train_data_path), pd.read_csv(test_data_path)], ignore_index=True)
+    #df_full = df_full.sample(frac=0.50, random_state=42)
 
     # Retrain the model on the full dataset
-    final_model = retrain_xgboost_model(df_full, fitted_vectorizer)
+    #final_model = retrain_xgboost_model(df_full, fitted_vectorizer)
 
-    dump(final_model, "xgboost_model_pipeline.joblib")
-    print("\nFinal model retrained and saved.")
+    #dump(final_model, "xgboost_model_pipeline.joblib")
+    #print("\nFinal model retrained and saved.")

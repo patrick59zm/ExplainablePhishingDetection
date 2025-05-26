@@ -106,7 +106,7 @@ def train_logistic_regression_model(
         )
         plt.xlabel("Coefficient")
         plt.ylabel("Feature (Word)")
-        plt.title("Top 20 Most Important Features (Logistic Regression)")
+        plt.title("Top 40 Most Important Features (Logistic Regression)")
         plt.gca().invert_yaxis()
         plt.show()
 
@@ -174,6 +174,6 @@ if __name__ == "__main__":
     trained_model, fitted_vectorizer = train_logistic_regression_model(train_data_path, test_data_path)
 
     # Retrain the model on the full dataset
-    final_model = retrain_logistic_regression_model(df, fitted_vectorizer)
+    #final_model = retrain_logistic_regression_model(df, fitted_vectorizer)
 
-    print("\nFinal model retrained and saved.")
+    #print("\nFinal model retrained and saved.")
