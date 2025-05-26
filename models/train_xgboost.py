@@ -18,7 +18,8 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
                        max_depth: int = 6, learning_rate: float = 0.05,
                        n_estimators: int = 1600,
                        plot_importance: bool = True,
-                       frac: float = 1.00) -> tuple[XGBClassifier, TfidfVectorizer]:
+                       frac: float = 1.00,
+                       target: str = "phishing") -> tuple[XGBClassifier, TfidfVectorizer]:
     """
     Trains an XGBoost model to classify emails as phishing or safe, using unigrams and bigrams.
 
@@ -31,6 +32,7 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
         n_estimators (int, optional): Number of trees in the XGBoost ensemble. Defaults to 800.
         plot_importance (bool, optional): Whether to plot the feature importance. Defaults to True.
         frac (float, optional): Fraction of dataset to use. Defaults to 1.00.
+        target (str, optional): Target classification task. Defaults to "phishing".
 
     Returns:
         xgb.XGBClassifier: The trained XGBoost model.
@@ -39,11 +41,17 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
     df_train = pd.read_csv(train_data_path)
     df_test = pd.read_csv(test_data_path)
 
-    df_train = df_train[["p_label", "sterilized_text"]]
-    df_test = df_test[["p_label", "sterilized_text"]]
+    if target.lower() == "phishing":
+        df_train = df_train[["p_label", "sterilized_text"]]
+        df_test = df_test[["p_label", "sterilized_text"]]
+        df_train.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+        df_test.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    else:
+        df_train = df_train[["g_label", "sterilized_text"]]
+        df_test = df_test[["g_label", "sterilized_text"]]
+        df_train.rename(columns={'g_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+        df_test.rename(columns={'g_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
 
-    df_train.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
-    df_test.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
 
     df_train['Email Text'] = df_train['Email Text'].fillna('')
     df_test['Email Text'] = df_test['Email Text'].fillna('')
@@ -124,7 +132,7 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
         plt.barh(importance_df["Feature"], importance_df["Importance"], color="royalblue")
         plt.xlabel("Gain")
         plt.ylabel("Feature (Word)")
-        plt.title("Top 30 Most Important Words for Phishing Detection")
+        plt.title("Top 30 Most Important Words for Detection")
         plt.gca().invert_yaxis()  # Highest importance at the top
         plt.show()
 
@@ -134,7 +142,7 @@ def train_xgboost_model(train_data_path: str, test_data_path: str,
 
 def retrain_xgboost_model(df: pd.DataFrame, vectorizer: TfidfVectorizer,
                          max_depth: int = 6, learning_rate: float = 0.1,
-                         n_estimators: int = 800) -> Pipeline:
+                         n_estimators: int = 800, target: str = "phishing") -> Pipeline:
     """
     Retrains an XGBoost model on the entire dataset.
 
@@ -144,14 +152,18 @@ def retrain_xgboost_model(df: pd.DataFrame, vectorizer: TfidfVectorizer,
         max_depth (int, optional): Maximum depth of the XGBoost trees. Defaults to 6.
         learning_rate (float, optional): Learning rate for XGBoost. Defaults to 0.1.
         n_estimators (int, optional): Number of trees in the XGBoost ensemble. Defaults to 800.
+        target (str, optional): Target classification task. Defaults to "phishing".
 
     Returns:
         xgb.XGBClassifier: The retrained XGBoost model.
     """
-    df = df[["p_label", "sterilized_text"]]
-    df.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    if target == "phishing":
+        df = df[["p_label", "sterilized_text"]]
+        df.rename(columns={'p_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
+    else:
+        df = df[["g_label", "sterilized_text"]]
+        df.rename(columns={'g_label': 'Email Type', 'sterilized_text': 'Email Text'}, inplace=True)
     df['Email Text'] = df['Email Text'].fillna('')
-
 
     X = df["Email Text"]  # Use the fitted vectorizer
     y = df["Email Type"]
@@ -182,18 +194,20 @@ def retrain_xgboost_model(df: pd.DataFrame, vectorizer: TfidfVectorizer,
 
 
 if __name__ == "__main__":
-    train_data_path = "../data/train/train_dataset.csv"
-    test_data_path = "../data/test/test_dataset.csv"
+    # train_data_path = "../data/train/train_dataset.csv"
+    # test_data_path = "../data/test/test_dataset.csv"
+    train_data_path = "../data/train/train_machine_data.csv"
+    test_data_path = "../data/test/test_machine_data.csv"
 
     # Train the model
-    trained_model, fitted_vectorizer = train_xgboost_model(train_data_path, test_data_path, frac=0.6)
+    trained_model, fitted_vectorizer = train_xgboost_model(train_data_path, test_data_path, frac=1.0, target="machine")
 
     # Load the entire dataset for retraining
-    #df_full = pd.concat([pd.read_csv(train_data_path), pd.read_csv(test_data_path)], ignore_index=True)
-    #df_full = df_full.sample(frac=0.50, random_state=42)
+    df_full = pd.concat([pd.read_csv(train_data_path), pd.read_csv(test_data_path)], ignore_index=True)
+    # df_full = df_full.sample(frac=0.50, random_state=42)
 
     # Retrain the model on the full dataset
-    #final_model = retrain_xgboost_model(df_full, fitted_vectorizer)
+    final_model = retrain_xgboost_model(df_full, fitted_vectorizer, target="machine")
 
-    #dump(final_model, "xgboost_model_pipeline.joblib")
+    dump(final_model, "xgboost_model_msg_pipeline.joblib")
     #print("\nFinal model retrained and saved.")
