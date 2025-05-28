@@ -70,10 +70,6 @@ The `Web_app/` directory contains a web application for interactive classificati
 
 Refer to `Web_app/README.md` for full instructions on using the demo.
 
-## Evaluation and Reporting
-
-Use `metrics.py` (root) and `models/metrics.py` to compute and visualize accuracy, precision, recall, F1, and ROC-AUC for all models. A detailed experimental report is available in `models_report_and_statistics.docx`.
-
 ## Usage Examples
 
 ```bash
