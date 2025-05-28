@@ -51,11 +51,8 @@ This project includes multiple classification models and explainability pipeline
 * BERT-based classifiers with LIME and SHAP explanations
 * DeepSeek LLM API for natural-language classification and explanation
 
-If you do not want to train these models yourself, you can download the pretrained pipelines (`.joblib` files) here:
+If you do not want to train these models yourself, you can find the joblib files for logistic regression and XGBoost in this repository and you can find the checkpoints for BERT in the following [link](https://polybox.ethz.ch/index.php/s/oS8Ej54GpfpLsP6).
 
-```
-link_2
-```
 
 See `models/README.md` for instructions on training, serialization, and running explainability scripts.
 
