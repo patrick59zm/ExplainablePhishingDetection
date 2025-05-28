@@ -10,6 +10,7 @@ from sklearn.metrics import classification_report, roc_auc_score, confusion_matr
 import matplotlib.pyplot as plt
 import seaborn as sns
 import csv
+import pickle
 
 
 
@@ -92,8 +93,8 @@ def test_bert(encoded_dataset_test, tokenizer, shap_explain, lime_explain, sampl
         )
 
         shap_values = explainer(X_test[:samples_to_explain])
-
-
+        # Save the SHAP values to a file
+        shap.save(shap_values, f'results/shap_values{machine_title}.pkl')
         ### MoRF evaluation ###
         print("MoRF evaluation: ")
         fractions_removed_list, MoRF_performance_list = moRF_LeRF_SHAP(
