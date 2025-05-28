@@ -8,40 +8,6 @@
 
 A modular project for detecting phishing and machine-generated emails using classical ML, transformer-based models, and an LLM-based API, with integrated explainability. You can preprocess data, train and evaluate multiple models, generate feature-based or natural-language explanations, and serve everything through a web interface.
 
-## Repository Structure
-
-```
-ExplainablePhishingDetection/      # Root folder
-├── data/                          # Raw and preprocessed datasets + splitting scripts
-│   ├── raw/
-│   ├── extracted/
-│   ├── extracted_combined/
-│   ├── train/
-│   ├── test/
-│   └── create_train_test_sets.py  # Custom splitting & preprocessing pipelines
-├── models/                       # Trained models & XAI pipelines
-│   ├── LLM_API_Classification/   # DeepSeek API wrappers & results
-│   ├── bert.py
-│   ├── train_logreg.py
-│   ├── train_xgboost.py
-│   ├── logreg_explainability.py
-│   ├── xgboost_explainability.py
-│   ├── logistic_regression_model_pipeline.joblib
-│   ├── xgboost_model_pipeline.joblib
-├── Web_app/                      # Front-end + back-end for interactive demo
-│   ├── chat_bot.py
-│   ├── front_end_setup.py
-│   ├── get_model_predictions.py
-│   ├── get_llm_prediction.py
-│   ├── explanation_processing.py
-├── bert_main.py                  # Standalone script for BERT-based batch inference
-├── metrics.py                    # Global evaluation and plotting utilities
-├── models_report_and_statistics.docx  # Detailed report of experiments
-├── requirements.txt              # Core Python dependencies
-├── LICENSE                       # Project license
-└── README.md                     # (This file)
-```
-
 ## Setup and Installation
 
 1. Clone and enter the repository:
