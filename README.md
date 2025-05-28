@@ -84,6 +84,9 @@ python3 data/create_train_test_sets.py --output_name phishing_test --num_rows 10
 python3 models/train_logreg.py
 python3 models/train_xgboost.py
 
+# Train BERT
+python3 bert_main.py --train
+
 # Run explanations on a sample email
 python3 models/logreg_explainability.py --input sample_email.txt
 
