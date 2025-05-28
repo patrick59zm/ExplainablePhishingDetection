@@ -2,27 +2,6 @@
 
 This directory contains all trained classification models and their associated explainability setups for phishing detection and machine-generated email recognition.
 
-## Folder Structure
-
-```
-models/
-├── LLM_API_Classification/           # DeepSeek API wrapper and example outputs
-│   ├── llm_results/                  # Sample DeepSeek API responses (JSON/text)
-│   ├── __init__.py
-│   ├── API_Classification.py         # Wrapper for phishing classification via DeepSeek
-│   ├── API_Classification_gen.py     # Wrapper for machine-generated-mail detection via DeepSeek
-│   └── evaluation.py                 # Evaluation scripts for LLM-based predictions
-├── __init__.py
-├── bert.py                           # BERT model loading, inference, and embedding extraction
-├── logreg_explainability.py          # Logistic Regression + ELI5 explanations
-├── train_logreg.py                   # Train & serialize logistic regression model
-├── train_xgboost.py                  # Train & serialize XGBoost model
-├── xgboost_explainability.py         # XGBoost + SHAP-based explanations
-├── logistic_regression_model_pipeline.joblib
-├── xgboost_model_pipeline.joblib
-metrics.py                        # Aggregation & plotting of all model metrics
-```
-
 ## Supported Models
 
 1. **Logistic Regression**
